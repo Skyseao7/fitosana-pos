@@ -32,7 +32,7 @@ export const LandingPagesWelcome = () => {
 
   return (
     <Container>
-      <ContentSection>
+      {/* <ContentSection>
         <SubContentSection>
           <LeftSection className="left-section">
             <h1>POS VENTAS CON REACT.JS {datausuarios?.id} </h1>
@@ -123,9 +123,9 @@ export const LandingPagesWelcome = () => {
             </MockupImage>
           </RightSection>
         </SubContentSection>
-      </ContentSection>
+      </ContentSection> */}
 
-      <Footer className="footer-section">
+      {/* <Footer className="footer-section">
         <FooterTitle>Tecnologias utilizadas:</FooterTitle>
         <FooterContent>
           <FooterItem>
@@ -149,7 +149,7 @@ export const LandingPagesWelcome = () => {
             </FooterText>
           </FooterItem>
         </FooterContent>
-      </Footer>
+      </Footer> */}
     </Container>
   );
 };

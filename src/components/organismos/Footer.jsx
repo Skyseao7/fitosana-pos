@@ -3,10 +3,10 @@ import { GiPadlock } from "react-icons/gi";
 export function Footer() {
   return (
     <Container>
-      <section className="lock">
+      {/* <section className="lock">
         <GiPadlock />
         <span>
-          Esta es una página segura de codigo369. Si tienes dudas sobre la
+          Esta es una página segura. Si tienes dudas sobre la
           autenticidad de la web, comunícate con
           <br /> nosotros al 311-9898 o a través de nuestros medios digitales.
         </span>
@@ -17,7 +17,7 @@ export function Footer() {
         <span>Todos los derechos reservados</span>
         <div className="separador"></div>
         <span>© 2023 codigo369.com</span>
-      </section>
+      </section> */}
     </Container>
   );
 }

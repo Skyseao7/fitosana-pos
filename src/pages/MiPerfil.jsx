@@ -11,85 +11,31 @@ import { useUsuariosStore } from "../store/UsuariosStore";
 import { useEditarPerfilMutation } from "../tanstack/UsuariosStack";
 export const MiPerfil = () => {
   const { datausuarios } = useUsuariosStore();
-  const {mutate,isPending} = useEditarPerfilMutation()
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm({
-    defaultValues: {
-      nombres: datausuarios?.nombres || "",
-      nro_doc: datausuarios?.nro_doc || "",
-      telefono: datausuarios?.telefono || "",
-    },
-  });
   return (
     <Container>
-       <Toaster position="top-right" />
-      {isPending ? (
-        <span>guardando...🐖</span>
-      ) : (
-        <>
-          <Title>Mi Perfil</Title> 
-          <Avatar>
-            <ContentRol>
-              <span>{datausuarios?.roles?.nombre} </span>
-            </ContentRol>
-            <span className="nombre">{datausuarios?.nombres}</span>
-          </Avatar>
-          <form onSubmit={handleSubmit(mutate)}>
-            <Label>Nombres</Label>
-            <InputText2>
-              <input
-                className="form__field"
-                placeholder="nombres"
-                type="text"
-                {...register("nombres", {
-                  required: true,
-                })}
-              />
-              {errors.nombres?.type === "required" && <p>Campo requerido</p>}
-            </InputText2>
-            <Label>Numero Identidad</Label>
-            <InputText2>
-              <input
-                className="form__field"
-                placeholder="nro_doc"
-                type="text"
-                {...register("nro_doc", {
-                  required: true,
-                })}
-              />
-              {errors.nro_doc?.type === "required" && <p>Campo requerido</p>}
-            </InputText2>
-            <Label>Celular</Label>
-            <InputText2>
-              <input
-                className="form__field"
-                placeholder="telefono"
-                type="text"
-                {...register("telefono", {
-                  required: true,
-                })}
-              />
-              {errors.telefono?.type === "required" && <p>Campo requerido</p>}
-            </InputText2>
-            <Label>Email</Label>
-            <InputText2>
-              <input
-                disabled="true"
-                step="0.01"
-                defaultValue={datausuarios?.correo}
-                className="form__field"
-                placeholder="correo"
-                type="text"
-              />
-            </InputText2>
-            <br></br>
-            <Btn1 bgcolor="#0930bb" color="#fff" titulo="GUARDAR CAMBIOS" />
-          </form>
-        </>
-      )}
+      <Title>Mi Perfil</Title>
+      <Avatar>
+        <ContentRol>
+          <span>{datausuarios?.roles?.nombre} </span>
+        </ContentRol>
+        <span className="nombre">{datausuarios?.nombres}</span>
+      </Avatar>
+      <Label>Nombres</Label>
+      <InputText2>
+        <span className="form__field" style={{background:'#f3f3f3',padding:'10px 16px',borderRadius:'8px',width:'100%',display:'block',color:'#222',fontWeight:'500'}}>{datausuarios?.nombres}</span>
+      </InputText2>
+      <Label>Numero Identidad</Label>
+      <InputText2>
+        <span className="form__field" style={{background:'#f3f3f3',padding:'10px 16px',borderRadius:'8px',width:'100%',display:'block',color:'#222',fontWeight:'500'}}>{datausuarios?.nro_doc}</span>
+      </InputText2>
+      <Label>Celular</Label>
+      <InputText2>
+        <span className="form__field" style={{background:'#f3f3f3',padding:'10px 16px',borderRadius:'8px',width:'100%',display:'block',color:'#222',fontWeight:'500'}}>{datausuarios?.telefono}</span>
+      </InputText2>
+      <Label>Email</Label>
+      <InputText2>
+        <span className="form__field" style={{background:'#f3f3f3',padding:'10px 16px',borderRadius:'8px',width:'100%',display:'block',color:'#222',fontWeight:'500'}}>{datausuarios?.correo}</span>
+      </InputText2>
     </Container>
   );
 };

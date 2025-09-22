@@ -62,26 +62,26 @@ export function LoginTemplate() {
       <div className="card">
         <ContentLogo>
           <img src={v.logo} />
-          <span>ada369 - POS VENTAS</span>
         </ContentLogo>
         <Title $paddingbottom="40px">Ingresar Modo</Title>
         {stateModos && (
           <ContentModos>
             <CardModos
-              title={"Super admin"}
+              title={"Administrador"}
               subtitle={"crea y gestiona tu empresa"}
-              bgcolor={"#ed7323"}
-              img={"https://i.ibb.co/TDXYj7r9/rey.png"}
+              bgcolor={"#9d6c12ff"}
+              img={"https://i.ibb.co/Lh8ND0H8/adminlogo.png"}
               funcion={() => {
                 setStateModo("superadmin");
                 setStateModos(!stateModos);
               }}
+              
             />
             <CardModos
               title={"Empleado"}
               subtitle={"vende y crece"}
-              bgcolor={"#542a1b"}
-              img={"https://i.ibb.co/ksfCmJyy/casco.png"}
+              bgcolor={"#1d8850"}
+              img={"https://i.ibb.co/rKjspwJp/empleado-removebg-preview.png"}
               funcion={() => {
                 setStateModo("empleado");
                 setStateModos(!stateModos);
@@ -114,7 +114,7 @@ export function LoginTemplate() {
                   <Btn1
                     border="2px"
                     titulo="INGRESAR"
-                    bgcolor="#1CB0F6"
+                    bgcolor="#1d8850"
                     color="255,255,255"
                     width="100%"
                   />
@@ -124,8 +124,8 @@ export function LoginTemplate() {
           : stateModos === false && (
               <PanelModo>
                 <VolverBtn funcion={() => setStateModos(!stateModos)} />
-                <span>Modo super admin</span>
-                <Btn1
+                <span>Modo Administrador</span>
+                {/* <Btn1
                   disabled={isPending}
                   funcion={manejarCrearUSerTester}
                   border="2px"
@@ -133,10 +133,10 @@ export function LoginTemplate() {
                   bgcolor="#f6ce1c"
                   color="255,255,255"
                   width="100%"
-                />
-                <Linea>
+                /> */}
+                {/* <Linea>
                   <span>0</span>
-                </Linea>
+                </Linea> */}
                 <Btn1
                   border="2px"
                   funcion={loginGoogle}
@@ -186,7 +186,7 @@ const ContentLogo = styled.section`
     font-weight: 700;
   }
   img {
-    width: 10%;
+    width: 30%;
   }
 `;
 const ContentModos = styled.div`

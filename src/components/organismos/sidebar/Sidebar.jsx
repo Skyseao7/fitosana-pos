@@ -28,7 +28,6 @@ export function Sidebar({ state, setState }) {
           <div className="imgcontent">
             <img src={v.logo} />
           </div>
-          <h2>Ada369 WEB</h2>
         </div>
         {LinksArray.map(({ icon, label, to }) => (
           <div
@@ -66,16 +65,25 @@ export function Sidebar({ state, setState }) {
               </section>
             </NavLink>
           </div>
+          
+
         ))}
         <div className={state ? "LinkContainer active" : "LinkContainer"}>
-          <div className="Links" onClick={cerrarSesion} >
+          <div
+            className={
+              `Links${state ? " active" : ""}`
+            }
+            onClick={cerrarSesion}
+            style={{ cursor: "pointer" }}
+          >
             <section className={state ? "content open" : "content"}>
-              <Icon
-                color="#CE82FF"
+              <img
+                src="https://i.ibb.co/Z6PLk4Sc/salida.png"
+                alt="Salir"
                 className="Linkicon"
-                icon="heroicons:ellipsis-horizontal-circle-solid"
+                style={{ width: "33px", height: "33px", objectFit: "contain", transition: "filter 0.3s" }}
               />
-              <span  className={state ? "label_ver" : "label_oculto"}>SALIR</span>
+              <span className={state ? "label_ver" : "label_oculto"}>SALIR</span>
             </section>
           </div>
          
@@ -116,12 +124,12 @@ const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    padding-bottom: 60px;
+    padding-bottom: 15px;
     .imgcontent {
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 30px;
+      width: 70%;
       cursor: pointer;
       transition: 0.3s ease;
       transform: ${({ $isopen }) =>
