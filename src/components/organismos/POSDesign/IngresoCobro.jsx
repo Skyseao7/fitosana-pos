@@ -170,6 +170,7 @@ export const IngresoCobro = forwardRef((props, ref) => {
             id_cierre_caja: dataCierreCaja?.id,
             id_ventas: idventa,
             vuelto: tipo === "Efectivo" ? vuelto : 0,
+            fecha_movimiento: fechaActual,
           };
           await insertarMovCaja(pmovcaja);
           nuevosMetodosPago.push({ tipo, monto, vuelto });

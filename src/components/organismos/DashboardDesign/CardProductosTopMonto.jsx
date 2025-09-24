@@ -30,7 +30,7 @@ export const CardProductosTopMonto = () => {
   return (
     <Container>
       <HeaderCard>
-        <Title>TOP 10 (productos por monto)</Title>
+        <Title>TOP 10 Productos por monto</Title>
       </HeaderCard>
       {
         data && data.length > 0 ?(<TablaProductosTop10 data={data} />):(<span className="textsindata">sin data...</span> )
