@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Device } from "../../../styles/breakpoints";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-export const CardTotales = ({ title, icon, value, percentage }) => {
+export const CardTotales = ({ title, icon, value, percentage, isCantidad }) => {
   const isPositive = percentage > 0;
   const isNeutral = percentage === 0;
   const {dataempresa} = useEmpresaStore()
@@ -15,11 +15,13 @@ export const CardTotales = ({ title, icon, value, percentage }) => {
         <Icon width="20" height="20" icon={icon} />
       </Title>
       
-      <SalesValue>{FormatearNumeroDinero(
-                  value || 0,
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}  </SalesValue>
+      <SalesValue>
+        {isCantidad ? value || 0 : FormatearNumeroDinero(
+          value || 0,
+          dataempresa?.currency,
+          dataempresa?.iso
+        )}
+      </SalesValue>
       {
         percentage!=undefined &&<Percentage isPositive={isPositive} isNeutral={isNeutral}>
        <Icon icon={isNeutral?"akar-icons:minus":isPositive?"iconamoon:arrow-up-2-fill":"iconamoon:arrow-down-2-fill"}   width="16"
@@ -32,7 +34,7 @@ export const CardTotales = ({ title, icon, value, percentage }) => {
   );
 };
 const Container = styled.div`
-  height: 100%;
+  height: 80%;
   position: relative;
   display:flex;
   flex-direction:column;

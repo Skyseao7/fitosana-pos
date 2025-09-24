@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import Swal from "sweetalert2";
 import {
   LinksArray,
   SecondarylinksArray,
@@ -12,12 +13,24 @@ import { useQueryClient } from "@tanstack/react-query";
 
 
 export function Sidebar({ state, setState }) {
-  const {cerrarSesion} = useAuthStore()
-  const queryClient = useQueryClient()
-//  const salir =()=>{
-//   cerrarSesion()
-//   queryClient.clear();
-//  }
+  const { cerrarSesion } = useAuthStore();
+  const queryClient = useQueryClient();
+  const salir = () => {
+    Swal.fire({
+      title: "¿Estás seguro/a?",
+      text: "Si cierras sesión tendrás que volver a iniciar sesión.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, cerrar sesión",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        cerrarSesion();
+        queryClient.clear();
+      }
+    });
+  };
   return (
     <Main $isopen={state.toString()}>
       <span className="Sidebarbutton" onClick={() => setState(!state)}>
@@ -73,7 +86,7 @@ export function Sidebar({ state, setState }) {
             className={
               `Links${state ? " active" : ""}`
             }
-            onClick={cerrarSesion}
+            onClick={salir}
             style={{ cursor: "pointer" }}
           >
             <section className={state ? "content open" : "content"}>
