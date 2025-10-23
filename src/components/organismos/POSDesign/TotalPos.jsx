@@ -28,7 +28,7 @@ export function TotalPos() {
   return (
     <Container>
     <section className="imagen">
-        <img src="https://i.ibb.co/HdYgDdp/corazon-2.png" />
+        <img src="https://i.ibb.co/XrqNS4GM/Leaf-Pin.webp" alt="Leaf-Pin" border="0" />
       </section>
       <section className="contentTotal">
         <section className="contentTituloTotal">

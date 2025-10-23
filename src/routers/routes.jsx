@@ -109,7 +109,7 @@ export function MyRoutes() {
         }
       />
       <Route
-        path="/configuracion/productos"
+        path="/productos"
         element={
           <Layout>
             <ProtectedRoute accessBy="authenticated">

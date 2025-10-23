@@ -34,7 +34,7 @@ export function LoginTemplate() {
     },
   });
   const { mutate: mutateTester, isPending } = useMutation({
-    mutationKey: ["iniciar con email tester"],
+    mutationKey: ["."],
     mutationFn: crearUserYLogin,
     onError: (error) => {
       toast.error(`Error: ${error.message}`);
@@ -44,9 +44,6 @@ export function LoginTemplate() {
       // window.location.reload();
     },
   });
-  const manejadorEmailSesionTester = () => {
-    mutateTester({ email: "tester1@gmail.com", password: "123456" });
-  };
   const manejadorEmailSesion = (data) => {
     mutate({ email: data.email, password: data.password });
   };

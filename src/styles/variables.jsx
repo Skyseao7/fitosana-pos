@@ -12,7 +12,7 @@ import { TbBrandSupabase } from "react-icons/tb";
 import { FaReact } from "react-icons/fa";
 import { BsArrowDown, BsArrowUpShort } from "react-icons/bs";
 import { FaBalanceScale } from "react-icons/fa";
-import logo from "../assets/ada369logo.png";
+import logo from "../assets/fitosanalogo.png";
 import { FcGoogle } from "react-icons/fc";
 
 import { RiCloseLine } from "react-icons/ri";
@@ -45,6 +45,8 @@ import { FcImageFile } from "react-icons/fc";
 import { IoIosArrowBack } from "react-icons/io";
 import { GrAdd } from "react-icons/gr";
 import { FaSearch } from "react-icons/fa";
+import { MdDelete } from "react-icons/md";
+
 export const v = {
   iconobuscar:FaSearch,
   colorPrincipal: `#F3D20C`,
@@ -77,7 +79,7 @@ export const v = {
   paletacolores: CiPalette,
   emoji: BsEmojiLaughing,
   iconeditarTabla: RiEditLine,
-  iconeliminarTabla: RiDeleteBin2Line,
+  iconeliminarTabla: MdDelete,
   colorIngresos: `#53B257`,
   colorbgingresos: `#e6ffe7`,
   colorGastos: `#fe6156`,

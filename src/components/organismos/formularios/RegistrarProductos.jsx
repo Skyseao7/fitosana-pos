@@ -35,14 +35,31 @@ export function RegistrarProductos({
   state,
 }) {
   if (!state) return;
+  //Lista de prueba, se modificará en un futuro
+  const unidadesDeVenta = [
+    { id: "Bebida", nombre: "Bebida" },
+    { id: "Caja", nombre: "Caja" },
+    { id: "Capsulas", nombre: "Capsulas" },
+    { id: "Gel", nombre: "Gel" },
+    { id: "Pack", nombre: "Pack" },
+    { id: "Polvo", nombre: "Polvo" },
+    { id: "Pote", nombre: "Pote" },
+    { id: "Sobre", nombre: "Sobre" },
+  ];
   //validar checkboxs
-  const [isChecked1, setIsChecked1] = useState(true);
+  /* const [isChecked1, setIsChecked1] = useState(true);
   const [isChecked2, setIsChecked2] = useState(false);
   const [sevendepor, setSevendepor] = useState("UNIDAD");
+  const [stock, setStock] = useState(""); */
+  
+  //selector de tipo
+  const [sevendepor, setSevendepor] = useState("Bebida"); // Estado para guardar el string
+  const [sevendePorItemSelect, setSevendePorItemSelect] = useState({ id: "Bebida", nombre: "Bebida" }); // Estado para el <SelectList>
   const [stock, setStock] = useState("");
+
   const [stockMinimo, setStockMinimo] = useState("");
   const [ubicacion, setUbicacion] = useState("");
-  const handleCheckboxChange = (checkboxNumber) => {
+  /* const handleCheckboxChange = (checkboxNumber) => {
     if (checkboxNumber === 1) {
       setIsChecked1(true);
       setIsChecked2(false);
@@ -52,8 +69,14 @@ export function RegistrarProductos({
       setIsChecked2(true);
       setSevendepor("GRANEL");
     }
-  };
+  }; */
   //
+  //Manejador
+  const handleSeVendePorSelect = (item) => {
+  setSevendePorItemSelect(item); // Actualiza el objeto (para la UI)
+  setSevendepor(item.nombre); // Actualiza el string (para la BD)
+  };
+
 
   const {
     insertarProductos,
@@ -71,7 +94,7 @@ export function RegistrarProductos({
     almacenSelectItem,
     setAlmacenSelectItem,
   } = useAlmacenesStore();
-  const [stateInventarios, setStateInventarios] = useState(false);
+  const [stateInventarios, setStateInventarios] = useState(true);
   const [stateEnabledStock, setStateEnabledStock] = useState(false);
 
   const [stateSucursalesLista, setStateSucursalesLista] = useState(false);
@@ -278,9 +301,14 @@ export function RegistrarProductos({
       })
       setRandomCodeinterno(dataSelect.codigo_interno);
       setRandomCodebarras(dataSelect.codigo_barras);
-      dataSelect.sevende_por === "UNIDAD"
+      /* dataSelect.sevende_por === "UNIDAD"
         ? handleCheckboxChange(1)
-        : handleCheckboxChange(0);
+        : handleCheckboxChange(0); */
+      
+        // Setea el estado del selector "Se vende por"
+      const sevendePorValor = dataSelect.sevende_por;
+      setSevendepor(sevendePorValor);
+      setSevendePorItemSelect({ id: sevendePorValor, nombre: sevendePorValor });  
       dataSelect.maneja_inventarios
         ? setStateInventarios(true)
         : setStateInventarios(false);
@@ -329,7 +357,7 @@ export function RegistrarProductos({
                       required: true,
                     })}
                   />
-                  <label className="form__label">nombre</label>
+                  <label className="form__label">Nombre</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -343,7 +371,7 @@ export function RegistrarProductos({
                     placeholder="precio venta"
                     {...register("precio_venta")}
                   />
-                  <label className="form__label">precio venta</label>
+                  <label className="form__label">Precio</label>
                 </InputText>
               </article>
               <article>
@@ -356,7 +384,7 @@ export function RegistrarProductos({
                     placeholder="precio compra"
                     {...register("precio_compra")}
                   />
-                  <label className="form__label">precio compra</label>
+                  <label className="form__label">C/U</label>
                 </InputText>
               </article>
               <article className="contentPadregenerar">
@@ -368,7 +396,7 @@ export function RegistrarProductos({
                     type="number"
                     placeholder="codigo de barras"
                   />
-                  <label className="form__label">codigo de barras</label>
+                  <label className="form__label">Codigo de barras</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -387,7 +415,7 @@ export function RegistrarProductos({
                     placeholder="codigo interno"
                     // {...register("codigo_interno")}
                   />
-                  <label className="form__label">codigo interno</label>
+                  <label className="form__label">Codigo interno</label>
                 </InputText>
                 <ContainerBtngenerar>
                   <Btngenerarcodigo
@@ -398,32 +426,28 @@ export function RegistrarProductos({
               </article>
             </section>
             <section className="seccion2">
-              <label>Se vende por: </label>
               <ContainerSelector>
-                <label>UNIDAD </label>
-                <Checkbox1
-                  isChecked={isChecked1}
-                  onChange={() => handleCheckboxChange(1)}
-                />
-                <label>GRANEL(decimales) </label>
-                <Checkbox1
-                  isChecked={isChecked2}
-                  onChange={() => handleCheckboxChange(2)}
+                <label>Tipo: </label>
+                <SelectList
+                  data={unidadesDeVenta}
+                  itemSelect={sevendePorItemSelect}
+                  onSelect={handleSeVendePorSelect}
+                  displayField="nombre"
                 />
               </ContainerSelector>
 
               <ContainerSelector>
-                <label>Categoria: </label>
+                <label>Marca: </label>
                 <SelectList data={datacategorias} itemSelect={categoriaItemSelect} onSelect={selectCategoria} displayField="nombre"/>
                 
               </ContainerSelector>
-              <ContainerSelector>
+              {/* <ContainerSelector>
                 <label>Controlar stock: </label>
                 <Switch1
                   state={stateInventarios}
                   setState={checkUseInventarios}
                 />
-              </ContainerSelector>
+              </ContainerSelector> */}
               {stateInventarios && (
                 <ContainerStock>
                   <ContainerSelector>
@@ -475,7 +499,7 @@ export function RegistrarProductos({
                     </InputText>
                   </article>
                   <article>
-                    <InputText icono={<v.iconoflechaderecha />}>
+                    {/* <InputText icono={<v.iconoflechaderecha />}>
                       <input
                         disabled={!!dataStockXAlmacenYProducto}
                         className="form__field"
@@ -493,7 +517,7 @@ export function RegistrarProductos({
                         onChange={(e) => setStockMinimo(e.target.value)}
                       />
                       <label className="form__label">stock minimo</label>
-                    </InputText>
+                    </InputText> */}
                   </article>
                   <article>
                     <InputText icono={<v.iconoflechaderecha />}>
@@ -588,12 +612,10 @@ const Container = styled.div`
   }
 `;
 const ContainerStock = styled.div`
-  border: 1px solid rgba(240, 104, 46, 0.9);
   display: flex;
   border-radius: 15px;
   padding: 12px;
   flex-direction: column;
-  background-color: rgba(240, 127, 46, 0.05);
 `;
 const ContainerBtngenerar = styled.div`
   position: absolute;

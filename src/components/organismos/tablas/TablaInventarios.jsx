@@ -67,8 +67,16 @@ export function TablaInventarios({
     {
       accessorKey: "fecha",
       header: "Fecha",
-      cell: (info) => <span>{info.getValue()}</span>,
-      enableColumnFilter: true,
+      cell: (info) => {
+        const date = new Date(info.getValue());
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 porque los meses son 0-11
+        const year = date.getFullYear();
+        const time = date.toLocaleTimeString('es-PE', { hour12: false }); // 'es-PE' para hora de Perú
+        
+        return <span>{`${day}-${month}-${year} ${time}`}</span>;
+      },
+      enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {
         if (filterStatuses.length === 0) return true;
         const status = row.getValue(columnId);

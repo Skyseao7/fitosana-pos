@@ -9,8 +9,7 @@ export function PageNot() {
             <span className="home__subtitle">página en </span>
             <h1 className="home__title">Construcción</h1>
             <p className="home__description">
-              Esta página se encuentra en <br /> construcción, pequeño
-              cerdecillo.
+              Esta página se encuentra en <br /> construcción.
             </p>
             <a href="/" className="home__button">
               VOLVER A HOME
@@ -18,7 +17,7 @@ export function PageNot() {
           </div>
 
           <div className="home__img">
-            <img src="https://i.ibb.co/J3ScNtK/roshi.png" alt="" />
+            <img src="https://i.ibb.co/3yzKNKnW/pagconstruccion.png" alt="" />
           </div>
         </div>
       </section>

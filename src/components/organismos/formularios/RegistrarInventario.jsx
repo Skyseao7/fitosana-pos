@@ -33,7 +33,7 @@ import { MessageComponent } from "../../ui/messages/MessageComponent";
 import { useEffect } from "react";
 export function RegistrarInventario() {
   const { setStateClose } = useGlobalStore();
-
+  const fechaLocal = useFormattedDate();
   const { tipo, setTipo } = useMovStockStore();
   const {
     selectProductos,
@@ -82,6 +82,34 @@ export function RegistrarInventario() {
     reset();
     setTipo("ingreso");
   };
+  const onSubmitPersonalizado = (data) => {
+    // Validar que se haya seleccionado un producto y almacen
+    if (!productosItemSelect?.id || !almacenSelectItem?.id) {
+      toast.error("Por favor, seleccione un producto y un almacén.");
+      return;
+    }
+
+    // Construir el objeto completo para la base de datos
+    const p = {
+      // Datos del formulario (data)
+      cantidad: data.cantidad,
+      precio_compra: data.precio_compra,
+      precio_venta: data.precio_venta,
+
+      // Tu fecha local (del hook)
+      fecha: fechaLocal, // 👈 PASO 2: AÑADE LA FECHA AQUÍ
+
+      // Datos de los stores
+      id_producto: productosItemSelect.id,
+      id_almacen: almacenSelectItem.id,
+      tipo_movimiento: tipo, // 'ingreso' o 'salida'
+    };
+
+    // Llamar a mutate con el objeto completo
+    mutate(p);
+    resetFuction(); // Resetea el formulario
+  };
+
   const isLoading = isLoadingSucursal || isLoadingAlmacenes;
   if (isLoading) {
     return <span>cargando almacenes...</span>;
@@ -151,7 +179,7 @@ export function RegistrarInventario() {
             </ContainerSelector>
           </section>
           {productosItemSelect?.maneja_inventarios ? (
-            <form className="formulario" onSubmit={handleSubmit(mutate)}>
+            <form className="formulario" onSubmit={handleSubmit(onSubmitPersonalizado)}>
               <section className="form-subcontainer">
                 <article>
                   <InputText icono={<v.iconoflechaderecha />}>

@@ -18,7 +18,7 @@ export function ContentAccionesTabla({ funcionEditar, funcionEliminar }) {
           funcion={funcionEliminar}
           fontSize="20px"
           color="#f76e8e"
-          icono={<Icon icon="fluent-emoji-high-contrast:skull" />}
+          icono={<v.iconeliminarTabla/>}
         />
       )}
     </Container>

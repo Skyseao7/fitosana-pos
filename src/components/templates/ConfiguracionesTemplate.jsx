@@ -27,7 +27,7 @@ export function ConfiguracionesTemplate() {
   return (
     <Container>
       <div id="cards">
-        {dataPermisosConfiguracion.map((item, index) => {
+        {dataPermisosConfiguracion.filter(item => item.modulos.nombre !== "Productos").map((item, index) => {
           return (
             <Link
               to={item.modulos.link}

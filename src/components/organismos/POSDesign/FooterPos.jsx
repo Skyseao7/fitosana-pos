@@ -33,17 +33,17 @@ export function FooterPos() {
     <Footer>
       <article className="content">
         <Btn1 disabled={isPending}
-          bgcolor="#f44141"
+          bgcolor="#4177f4ff"
           color="#fff"
           funcion={mutateEliminarVenta}
-          icono={<Icon icon="fluent-emoji-flat:skull" />}
-          titulo="Eliminar venta"
+          icono={<Icon icon="carbon:clean" />}
+          titulo="Limpiar venta"
         />
         <Btn1
           bgcolor="#fff"
           color="#2d2d2d"
           funcion={()=>setStateCierraCaja(true)}
-          icono={<Icon icon="emojione:card-file-box" />}
+          icono={<Icon icon="healthicons:money-bag-outline" />}
           titulo="Cerrar caja"
         />
         <Btn1
@@ -53,7 +53,7 @@ export function FooterPos() {
             setStateIngresoSalida(true)
         setTipoRegistro("ingreso")
           } }
-          icono={<Icon icon="fluent-emoji:dollar-banknote" />}
+          icono={<Icon icon="vaadin:money-withdraw" />}
           titulo="Ingresar dinero"
         />
         <Btn1
@@ -63,7 +63,7 @@ export function FooterPos() {
             setStateIngresoSalida(true)
         setTipoRegistro("salida")
           } }
-          icono={<Icon icon="noto-v1:money-bag" />}
+          icono={<Icon icon="streamline-freehand:money-atm-withdraw" />}
           titulo="Retirar dinero"
         />
         {/* <Btn1

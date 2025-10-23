@@ -42,6 +42,11 @@ export const LinksArray = [
     to: "/pos",
   },
   {
+    label: "PRODUCTOS",
+    icon:"streamline-flex-color:production-belt-time",
+    to: "/productos",
+  },
+  {
     label: "Inventario",
     icon: "flat-ui:box",
     to: "/inventario",
