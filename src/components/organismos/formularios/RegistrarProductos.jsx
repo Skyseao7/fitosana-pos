@@ -67,7 +67,7 @@ export function RegistrarProductos({
 
   // Stores y Hooks
   const { insertarProductos, editarProductos, generarCodigo, codigogenerado } = useProductosStore(); 
-  const { insertarStock, mostrarStockXAlmacenYProducto, updateStock } = useStockStore();
+ const { insertarStock, mostrarStockXAlmacenYProducto, actualizarDetallesStock } = useStockStore();
   const { dataempresa } = useEmpresaStore();
   const { mostrarAlmacenesXSucursal, almacenSelectItem, setAlmacenSelectItem } = useAlmacenesStore();
   const { dataSucursales, selectSucursal, sucursalesItemSelect } = useSucursalesStore();
@@ -212,7 +212,23 @@ export function RegistrarProductos({
             };
             await insertarStock(stockData);
         } else if (stockExistente){
-             console.log("Stock ya existe (Editar), no se inserta nuevo.");
+             console.log("Stock ya existe (Editar). Actualizando detalles...");
+            if (actualizarDetallesStock) {
+                try {
+                    await actualizarDetallesStock({
+                        id: stockExistente.id, // ID del registro en la tabla 'stock'
+                        ubicacion: formData.detalles || '-', // Solo el detalle, stock_minimo no cambia
+                    });
+                    console.log("Detalles actualizados en stock ID:", stockExistente.id);
+                } catch (error) {
+                    console.error("Error al llamar a actualizarDetallesStock:", error);
+                    // Importante: re-lanzar el error para que onError de useMutation lo capture
+                    throw error; 
+                }
+            } else {
+                console.error("Función actualizarDetallesStock no encontrada en useStockStore.");
+                throw new Error("No se pudo actualizar la ubicación del stock (función no encontrada).");
+            }
         }
       } else { // NUEVO
         // Objeto para insertar (CON _maneja_multiprecios)
@@ -425,7 +441,7 @@ export function RegistrarProductos({
              {/* Mensaje de advertencia para editar stock (opcional, si aún lo necesitas) */}
              {accion === 'Editar' && dataStockEspecifico && (
                <ContainerMensajeStock>
-                 <span> 💀 Use Inventario para ajustar el stock.</span>
+                 <span> ❗ Use Inventario para ajustar el stock.</span>
                </ContainerMensajeStock>
              )}
 
