@@ -70,9 +70,9 @@ export function TablaInventarios({
       cell: (info) => {
         const date = new Date(info.getValue());
         const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 porque los meses son 0-11
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
-        const time = date.toLocaleTimeString('es-PE', { hour12: false }); // 'es-PE' para hora de Perú
+        const time = date.toLocaleTimeString('es-PE', { hour12: false });
         
         return <span>{`${day}-${month}-${year} ${time}`}</span>;
       },

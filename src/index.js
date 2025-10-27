@@ -95,5 +95,6 @@ export * from './supabase/crudTipodocumentos';
 export * from './supabase/crudUsuarios';
 export * from './supabase/crudVenta';
 export * from './supabase/supabase.config';
+export * from './tanstack/ProductosStack';
 export * from './utils/Conversiones';
 export * from './utils/dataEstatica';

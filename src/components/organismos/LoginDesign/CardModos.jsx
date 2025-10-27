@@ -16,7 +16,7 @@ export function CardModos({ title, subtitle, img, bgcolor, funcion }) {
           <img
             className="character-image"
             src={img}
-            alt="My Hero Academia character"
+            alt="."
           />
         </article>
       </section>

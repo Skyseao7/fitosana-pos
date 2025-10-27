@@ -65,7 +65,7 @@ export function LoginTemplate() {
           <ContentModos>
             <CardModos
               title={"Administrador"}
-              subtitle={"crea y gestiona tu empresa"}
+              subtitle={"gestiona tu negocio"}
               bgcolor={"#9d6c12ff"}
               img={"https://i.ibb.co/Lh8ND0H8/adminlogo.png"}
               funcion={() => {
