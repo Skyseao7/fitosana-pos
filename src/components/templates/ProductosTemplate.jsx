@@ -9,6 +9,8 @@ import {
   useProductosStore,
   useEmpresaStore,
   useMostrarProductosQuery, // Hook de React Query
+  useCategoriasStore,
+  Select
 } from "../../index";
 import { v } from "../../styles/variables";
 import ConfettiExplosion from "react-confetti-explosion";
@@ -17,15 +19,22 @@ import { Toaster } from "sonner";
 export function ProductosTemplate() {
 
   const [openRegistro, SetopenRegistro] = useState(false);
-  const { setBuscador, generarCodigo } = useProductosStore();
+  const { generarCodigo } = useProductosStore();
   const { dataempresa } = useEmpresaStore();
   const [accion, setAccion] = useState("");
   const [dataSelect, setdataSelect] = useState([]);
   const [isExploding, setIsExploding] = useState(false);
 
-  // Usa el hook de React Query
-  const { data: dataProductos, isLoading, isError, error, refetch, isFetching, status } = // Añade status
+  // Datos de Productos (React Query)
+  const { data: dataProductosOriginal, isLoading, isError, error, refetch, isFetching } =
     useMostrarProductosQuery(dataempresa?.id);
+
+  // Datos y estado para filtro de Marca
+  const { datacategorias, selectCategoria, categoriaItemSelect } = useCategoriasStore(); // Obtén las categorías/marcas
+  const [filtroMarca, setFiltroMarca] = useState(null); // Estado para la marca seleccionada
+
+  // Estado para el buscador general
+  const [textoBusquedaGeneral, setTextoBusquedaGeneral] = useState("");
 
   useEffect(() => {
     // Llama a refetch solo si tenemos id_empresa.
@@ -34,6 +43,27 @@ export function ProductosTemplate() {
     } 
   }, [dataempresa?.id, refetch]);
 
+  // FILTRADO CLIENT-SIDE: Filtra los productos basados en la búsqueda general y la marca
+  const dataProductosFiltrados = useMemo(() => {
+    let productos = dataProductosOriginal ?? []; // Empieza con todos los productos
+
+    // Filtra por Marca seleccionada
+    if (filtroMarca?.id) {
+        productos = productos.filter(p => p.id_categoria === filtroMarca.id);
+    }
+
+    // Filtra por texto de búsqueda general (nombre, código)
+    if (textoBusquedaGeneral) {
+        const lowerTexto = textoBusquedaGeneral.toLowerCase();
+        productos = productos.filter(p =>
+            p.nombre?.toLowerCase().includes(lowerTexto) ||
+            p.codigo_barras?.toLowerCase().includes(lowerTexto) ||
+            p.codigo_interno?.toLowerCase().includes(lowerTexto)
+        );
+    }
+
+    return productos;
+  }, [dataProductosOriginal, filtroMarca, textoBusquedaGeneral]);
 
   function nuevoRegistro() {
     // ... (tu función)
@@ -43,6 +73,11 @@ export function ProductosTemplate() {
     setIsExploding(false);
     generarCodigo();
   }
+
+  console.log("Texto Búsqueda:", textoBusquedaGeneral); // 👈
+
+  if (isLoading && !dataProductosOriginal) { return <span>Cargando productos...</span>; }
+  if (isError) { return <span>Error al cargar productos: {error?.message || 'Error desconocido'}</span>; }
 
   // --- Lógica de Renderizado Condicional ---
 
@@ -79,13 +114,30 @@ export function ProductosTemplate() {
         {isFetching && <span style={{fontSize: '0.8em', opacity: 0.7}}>🔄</span>} 
         <Btn1
           funcion={nuevoRegistro}
-          bgcolor={v.colorPrincipal}
+          bgcolor="#1d8850"
           titulo="nuevo"
           icono={<v.iconoagregar />}
         />
       </section>
       <section className="area2">
-        <Buscador setBuscador={setBuscador} />
+        <Buscador
+          placeholder="Buscar por nombre o código..."
+          setBuscador={setTextoBusquedaGeneral} // Pasa el setter del estado local
+        />
+
+        <SelectMarcaContainer>
+         <Select // Usa tu componente Select buscable
+            options={datacategorias || []} // Asegura que sea un array
+            value={filtroMarca} // El estado local para el filtro
+            onChange={(selectedOption) => setFiltroMarca(selectedOption)} // Actualiza el estado del filtro
+            getOptionLabel={(option) => option.nombre}
+            getOptionValue={(option) => option.id}
+            placeholder="Filtrar por Marca..."
+            isClearable // Permite borrar la selección
+            isSearchable
+            // styles={customSelectStyles} // Estilos opcionales
+          />
+        </SelectMarcaContainer>
       </section>
 
       <section className="main">
@@ -94,8 +146,7 @@ export function ProductosTemplate() {
           setdataSelect={setdataSelect}
           setAccion={setAccion}
           SetopenRegistro={SetopenRegistro}
-           // Asegura pasar un array vacío si dataProductos es null/undefined
-          data={dataProductos ?? []} 
+          data={dataProductosFiltrados} // <-- PASA LOS DATOS FILTRADOS
         />
       </section>
     </Container>
@@ -109,13 +160,14 @@ const Container = styled.div`
   display: grid;
   grid-template:
     "area1" 60px
-    "area2" 60px
+    "area2" 60px  // Espacio para los buscadores
     "main" auto;
+    gap: 15px; // Espacio entre áreas
   .area1 {
     grid-area: area1;
     /* background-color: rgba(103, 93, 241, 0.14); */
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
     align-items: center;
     gap: 15px;
   }
@@ -123,11 +175,15 @@ const Container = styled.div`
     grid-area: area2;
     /* background-color: rgba(7, 237, 45, 0.14); */
     display: flex;
-    justify-content: end;
+    justify-content: flex-start;
     align-items: center;
+    gap: 20px; // Espacio entre buscadores
   }
   .main {
     grid-area: main;
     /* background-color: rgba(237, 7, 221, 0.14); */
   }
+`;
+const SelectMarcaContainer = styled.div`
+  min-width: 250px; // O el ancho que prefieras
 `;
