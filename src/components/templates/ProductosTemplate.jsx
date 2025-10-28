@@ -112,12 +112,7 @@ export function ProductosTemplate() {
         <Title>Productos</Title>
         {/* Muestra un loader pequeño si está haciendo refetch en background */}
         {isFetching && <span style={{fontSize: '0.8em', opacity: 0.7}}>🔄</span>} 
-        <Btn1
-          funcion={nuevoRegistro}
-          bgcolor="#1d8850"
-          titulo="nuevo"
-          icono={<v.iconoagregar />}
-        />
+        
       </section>
       <section className="area2">
         <Buscador
@@ -132,12 +127,19 @@ export function ProductosTemplate() {
             onChange={(selectedOption) => setFiltroMarca(selectedOption)} // Actualiza el estado del filtro
             getOptionLabel={(option) => option.nombre}
             getOptionValue={(option) => option.id}
-            placeholder="Filtrar por Marca..."
+            placeholder="Filtro por Marca..."
             isClearable // Permite borrar la selección
             isSearchable
             // styles={customSelectStyles} // Estilos opcionales
           />
         </SelectMarcaContainer>
+        <Btn1
+          funcion={nuevoRegistro}
+          bgcolor="#1d8850"
+          color="#fff"
+          titulo="NUEVO"
+          icono={<v.iconoagregar />}
+        />
       </section>
 
       <section className="main">
@@ -167,7 +169,7 @@ const Container = styled.div`
     grid-area: area1;
     /* background-color: rgba(103, 93, 241, 0.14); */
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     gap: 15px;
   }
@@ -177,7 +179,16 @@ const Container = styled.div`
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 20px; // Espacio entre buscadores
+    gap: 30px; // Espacio entre buscadores
+    
+    & > :first-child { // Selecciona al primer hijo (el Buscador)
+      flex-grow: 1; // Permite que crezca y ocupe el espacio extra
+      max-width: 450px; // Ponle un límite de ancho (ajusta este valor)
+    }
+  }
+  }
+  .area2 > button { // Selecciona el Btn1 (que es un <button>) dentro de .area2
+    /* margin-left: 440px; // Añade un margen izquierdo extra solo al botón */
   }
   .main {
     grid-area: main;
