@@ -44,3 +44,16 @@ export async function Mostrartop10productosmasvendidosxmonto(p) {
   );
   return data;
 }
+export async function MostrarDetalleVentaPorId(p) {
+  // p debe ser { id_venta: ... }
+  const { data, error } = await supabase
+    .from("detalle_venta")
+    .select("*")
+    .eq("id_venta", p.id_venta);
+
+  if (error) {
+    Swal.fire("Error", "No se pudo cargar el detalle: " + error.message, "error");
+    throw new Error(error.message);
+  }
+  return data;
+}

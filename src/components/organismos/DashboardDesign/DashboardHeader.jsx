@@ -2,12 +2,12 @@ import styled from "styled-components";
 import { Device } from "../../../styles/breakpoints";
 import { DateRangeFilter } from "./DateRangeFilter";
 
-export const DashboardHeader = () => {
-  return (
-    <Container>
-      <TextContainer>
-        <Title>Dashboard</Title>
-      </TextContainer>
+export const DashboardHeader = ({ title = "Dashboard" }) => {
+  return (
+    <Container>
+      <TextContainer>
+        <Title>{title}</Title>
+      </TextContainer>
       <ActionsContainer>
         <DateRangeFilter />
       </ActionsContainer>
@@ -26,7 +26,7 @@ const Container = styled.div`
 `;
 const TextContainer = styled.div``;
 const Title = styled.h1`
-font-size: 44px;
+font-size: 40px;
 font-weight: bold;
 margin: 0;
 `;

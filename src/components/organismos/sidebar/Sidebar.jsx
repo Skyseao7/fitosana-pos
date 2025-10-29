@@ -149,7 +149,7 @@ const Container = styled.div`
           $isopen === "true" ? `scale(0.7)` : `scale(1.5)`}
         rotate(${({ theme }) => theme.logorotate});
       img {
-        width: 100%;
+        width: 80%;
         animation: flotar 1.7s ease-in-out infinite alternate;
       }
     }
@@ -175,7 +175,7 @@ const Container = styled.div`
     text-decoration: none;
     width: 100%;
     color: ${(props) => props.theme.text};
-    height: 60px;
+    height: 50px;
     position: relative;
     .content {
       display: flex;

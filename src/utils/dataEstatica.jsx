@@ -27,17 +27,17 @@ export const DesplegableUser = [
 //data SIDEBAR
 export const LinksArray = [
   {
-    label: "Home",
+    label: "HOME",
     icon: "noto-v1:house",
     to: "/",
   },
   {
-    label: "Dashboard",
+    label: "DASHBOARD",
     icon: "fluent-emoji-flat:antenna-bars",
     to: "/dashboard",
   },
   {
-    label: "VENDER",
+    label: "VENTA",
     icon: "flat-color-icons:shop",
     to: "/pos",
   },
@@ -50,6 +50,11 @@ export const LinksArray = [
     label: "Inventario",
     icon: "flat-ui:box",
     to: "/inventario",
+  },
+  {
+    label: "Historial de ventas",
+    icon: "mdi:history",
+    to: "/historialventas",
   },
   // {
   //   label: "Reportes",

@@ -18,21 +18,50 @@ export const useUsuariosStore = create((set) => ({
   mostrarusuarios: async (p) => {
     console.log("🏁 Ejecutando mostrarusuarios con:", p.id_auth);
     try {
-      const { data, error } = await supabase
-        .from(tabla)
+      // Paso 1: Obtener datos del usuario (como ya lo hacías)
+      const { data: dataUsuario, error: errorUsuario } = await supabase
+        .from(tabla) // "usuarios"
         .select(`*, roles(*)`)
         .eq("id_auth", p.id_auth)
         .maybeSingle();
 
-      console.log("📥 Resultado Supabase:", data);
-
-      if (error) {
-        console.error("💥 Supabase error en MostrarUsuarios:", error);
-        throw new Error(error.message);
+      if (errorUsuario) {
+        console.error("💥 Supabase error en MostrarUsuarios:", errorUsuario);
+        throw new Error(errorUsuario.message);
+      }
+      
+      // Si no se encuentra el usuario, no podemos continuar
+      if (!dataUsuario) {
+        console.warn("🤔 Usuario no encontrado con id_auth:", p.id_auth);
+        set({ datausuarios: null }); 
+        return null;
       }
 
-      set({ datausuarios: data });
-      return data;
+      // Paso 2: Usar el ID del usuario para buscar su asignación y empresa
+      const { data: dataAsignacion, error: errorAsignacion } = await supabase
+        .from("asignacion_sucursal")
+        .select("sucursales(id_empresa)") // Solo queremos el id_empresa de la tabla sucursales
+        .eq("id_usuario", dataUsuario.id)
+        .maybeSingle(); // Asumimos que un usuario está en una sucursal
+
+      if (errorAsignacion) {
+        console.error("💥 Supabase error en Asignacion:", errorAsignacion.message);
+        // No lanzamos error, solo no tendremos id_empresa
+      }
+
+      // Paso 3: Combinar los datos del usuario con el id_empresa
+      const fullData = { 
+        ...dataUsuario, 
+        // El resultado es { sucursales: { id_empresa: 123 } }
+        // Usamos Optional Chaining (?.) por si no tiene asignación
+        id_empresa: dataAsignacion?.sucursales?.id_empresa || null 
+      };
+
+      console.log("📥 Resultado Supabase Combinado:", fullData);
+
+      set({ datausuarios: fullData });
+      return fullData;
+
     } catch (err) {
       console.error("🔥 ERROR inesperado:", err);
       throw err;

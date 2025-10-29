@@ -56,3 +56,22 @@ export async function ConfirmarVenta(p) {
   }
   return data;
 }
+export async function MostrarHistorialVentas(p) {
+  const { data, error } = await supabase
+    .from("ventas")
+    .select(`
+      *,
+      id_cliente (id, nombres),
+      id_usuario (id, nombres)
+    `)
+    .eq("id_empresa", p.id_empresa)
+    .gte("fecha", p.fechaInicio)  // Mayor o igual a la fecha de inicio
+    .lte("fecha", p.fechaFin)    // Menor o igual a la fecha de fin
+    .order("fecha", { ascending: false }); // Mostrar las más recientes primero
+
+  if (error) {
+    Swal.fire("Error", "No se pudo cargar el historial: " + error.message, "error");
+    throw new Error(error.message);
+  }
+  return data;
+}

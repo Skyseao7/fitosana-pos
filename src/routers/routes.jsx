@@ -25,6 +25,7 @@ import { ConfiguracionTicket } from "../pages/ConfiguracionTicket";
 import { MiPerfil } from "../pages/MiPerfil";
 import { SerializacionComprobantes } from "../pages/SerializacionComprobantes";
 import { Reportes } from "../pages/Reportes";
+import { HistorialVentas } from "../pages/HistorialVentas";
 
 export function MyRoutes() {
   return (
@@ -114,6 +115,16 @@ export function MyRoutes() {
           <Layout>
             <ProtectedRoute accessBy="authenticated">
               <Productos />
+            </ProtectedRoute>
+          </Layout>
+        }
+      />
+      <Route
+        path="/historialventas"
+        element={
+          <Layout>
+            <ProtectedRoute accessBy="authenticated">
+              <HistorialVentas />
             </ProtectedRoute>
           </Layout>
         }
