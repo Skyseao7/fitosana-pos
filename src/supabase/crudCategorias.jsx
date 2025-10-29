@@ -2,25 +2,28 @@ import Swal from "sweetalert2";
 import { supabase } from "../index";
 const tabla = "categorias";
 export async function InsertarCategorias(p, file) {
-  const { error, data } = await supabase.rpc("insertarcategorias", p);
+  // 1. Llama a la función RPC. Esto funciona y crea la categoría.
+  const { error, data } = await supabase.rpc("insertarcategorias", p);
   if (error) {
     Swal.fire({
       icon: "error",
       title: "Oops...categorias",
       text: error.message,
     });
-    return;
+    throw new Error(error.message);
   }
-  const img = file.size;
-  if (img != undefined) {
-    const nuevo_id = data;
-    const urlImagen = await subirImagen(nuevo_id, file);
-    const piconoeditar = {
-      icono: urlImagen.publicUrl,
-      id: nuevo_id,
-    };
-    await EditarIconoCategorias(piconoeditar);
-  }
+  if (file) { 
+    const img = file.size; 
+    if (img != undefined) { // Tu comprobación original
+      const nuevo_id = data;
+      const urlImagen = await subirImagen(nuevo_id, file);
+      const piconoeditar = {
+        icono: urlImagen.publicUrl,
+        id: nuevo_id,
+      };
+      await EditarIconoCategorias(piconoeditar);
+    }
+  }  return data; // Devuelve el ID recién creado
 }
 
 async function subirImagen(idcategoria, file) {

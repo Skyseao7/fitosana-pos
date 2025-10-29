@@ -1,4 +1,5 @@
 import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import styled from "styled-components";
 import { v } from "../../../styles/variables"; // Asegúrate que todos los iconos usados aquí existan en 'v'
 import {
@@ -64,14 +65,15 @@ export function RegistrarProductos({
   const [randomCodeinterno, setRandomCodeinterno] = useState(defaultCodInterno);
   const [randomCodebarras, setRandomCodebarras] = useState(defaultCodBarras);
   const [stateInventarios] = useState(true);
+  const [isCreatingMarca, setIsCreatingMarca] = useState(false);
 
   // Stores y Hooks
   const { insertarProductos, editarProductos, generarCodigo, codigogenerado } = useProductosStore(); 
- const { insertarStock, mostrarStockXAlmacenYProducto, actualizarDetallesStock } = useStockStore();
+  const { insertarStock, mostrarStockXAlmacenYProducto, actualizarDetallesStock } = useStockStore();
   const { dataempresa } = useEmpresaStore();
   const { mostrarAlmacenesXSucursal, almacenSelectItem, setAlmacenSelectItem } = useAlmacenesStore();
   const { dataSucursales, selectSucursal, sucursalesItemSelect } = useSucursalesStore();
-  const { datacategorias, selectCategoria, categoriaItemSelect } = useCategoriasStore();
+  const { datacategorias, selectCategoria, categoriaItemSelect, insertarCategorias } = useCategoriasStore();
 
   // 👇 OBTÉN queryClient 👇
   const queryClient = useQueryClient();
@@ -163,7 +165,53 @@ export function RegistrarProductos({
   const cerrarFormulario = useCallback(() => { // useCallback
     onClose();
   }, [onClose, setIsExploding]);
+  // 👇 4. AÑADE EL MANEJADOR PARA CREAR LA MARCA
+  const handleCreateMarca = async (inputValue) => {
+    if (isCreatingMarca || !inputValue || !dataempresa?.id) return;
 
+    setIsCreatingMarca(true);
+    const nombreMarca = inputValue.toUpperCase(); // Guarda en mayúsculas
+
+    // Revisa si ya existe (buena práctica)
+    const exists = datacategorias.find(cat => cat.nombre.toUpperCase() === nombreMarca);
+    if (exists) {
+        toast.info(`La marca "${nombreMarca}" ya existe.`);
+        selectCategoria(exists); // Simplemente la selecciona
+        setIsCreatingMarca(false);
+        return;
+    }
+
+    // Prepara el objeto 'p' que espera tu función SQL 'insertarcategorias'
+    const p = {
+      _nombre: nombreMarca,
+      _color: "#CCCCCC", // Asigna un color por defecto
+      _icono: "-",       // Asigna un icono por defecto
+      _id_empresa: dataempresa.id
+    };
+
+    try {
+      // Llama a la función de tu store. 
+      // Tu store espera (p, file), así que pasamos 'null' para el archivo.
+      await insertarCategorias(p, null); 
+      
+      // Después del await, el store ya refrescó 'datacategorias'
+      // Busca la nueva opción en la lista actualizada
+      const newOption = useCategoriasStore.getState().datacategorias.find(cat => cat.nombre === nombreMarca);
+      
+      if (newOption) {
+        selectCategoria(newOption); // Selecciona la marca recién creada
+        toast.success(`Marca "${nombreMarca}" creada.`);
+      } else {
+         toast.warning("Marca creada, pero no se pudo seleccionar automáticamente.");
+      }
+    } catch (error) {
+      console.error("Error al crear la marca:", error);
+      toast.error(`No se pudo crear la marca: ${error.message}`);
+    } finally {
+      setIsCreatingMarca(false);
+    }
+  };
+  // 👆 FIN DEL NUEVO MANEJADOR
   // --- Mutation ---
   const { mutate: guardarProducto, isPending } = useMutation({ /* ... tu useMutation ... */
       mutationFn: async (formData) => {
@@ -373,16 +421,17 @@ export function RegistrarProductos({
 
                 <ContainerSelector> {/* Marca */}
                   <label>Marca:</label>
-                  <Select
-                    options={datacategorias} // Your categories/brands array
-                    value={categoriaItemSelect} // The selected object
-                    onChange={selectCategoria} // Function to handle change
+                  <CreatableSelect
+                    options={datacategorias || []} 
+                    value={categoriaItemSelect}
+                    onChange={selectCategoria} // Se usa al seleccionar uno existente
+                    onCreateOption={handleCreateMarca} // Se usa al crear uno nuevo
                     getOptionLabel={(option) => option.nombre}
-                    getOptionValue={(option) => option.id} // Tell react-select which property is the value
-                    placeholder="Buscar..."
-                    isSearchable // Enable searching
-                    // You might need to add styles to match your design
-                    // styles={customStyles} 
+                    getOptionValue={(option) => option.id}
+                    placeholder="Marca..."
+                    isSearchable
+                    isDisabled={isPending || isCreatingMarca} // Deshabilita si está guardando
+                    isLoading={isCreatingMarca} // Muestra spinner si está creando marca
                   />
                 </ContainerSelector>
             </div>
