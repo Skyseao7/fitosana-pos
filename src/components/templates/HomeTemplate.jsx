@@ -153,7 +153,7 @@ export function HomeTemplate() {
         
         {/* Widget de Tareas */}
         <WidgetCard>
-          <WidgetTitle>📝 To-Do List</WidgetTitle>
+          <WidgetTitle>Lista de pendientes</WidgetTitle>
           <InputTarea id_empresa={id_empresa} id_usuario={id_usuario} />
           <List>
             {tareas?.map((tarea) => (
@@ -172,7 +172,7 @@ export function HomeTemplate() {
         
         {/* Widget de Recordatorios */}
         <WidgetCard>
-          <WidgetTitle>🗓️ Productos por Vencer (Próximos 30 días)</WidgetTitle>
+          <WidgetTitle>Productos por Vencer (Próximos 30 días)</WidgetTitle>
           <InputRecordatorio id_empresa={id_empresa} />
           <List>
             {recordatorios?.map((item) => (
