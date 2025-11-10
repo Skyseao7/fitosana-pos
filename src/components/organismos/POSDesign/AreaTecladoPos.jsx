@@ -2,63 +2,59 @@ import styled from "styled-components";
 import { Btn1 } from "../../moleculas/Btn1";
 import { TotalPos } from "./TotalPos";
 import { Device } from "../../../styles/breakpoints";
-import { useVentasStore } from "../../../store/VentasStore";
-
+import { useCartVentasStoreTemporal } from "../../../store/CartVentasStoreTemporal";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
 import { useMetodosPagoStore } from "../../../store/MetodosPagoStore";
-import { useQuery } from "@tanstack/react-query";
 import { useValidarPermisosOperativos } from "../../../hooks/useValidarPermisosOperativos";
-import { useDetalleVentasStore } from "../../../store/DetalleVentasStore";
-export function AreaTecladoPos() {
-  const { setStatePantallaCobro, stateMetodosPago } = useVentasStore();
-  const { dataempresa } = useEmpresaStore();
-  const { dataMetodosPago: datametodospago } = useMetodosPagoStore();
-  const {datadetalleventa} = useDetalleVentasStore()
-  const { validarPermiso } = useValidarPermisosOperativos();
-  // const { data: datametodospago } = useQuery({
-  //   queryKey: ["mostrar metodos de pago"],
-  //   queryFn: () => mostrarMetodosPago({ id_empresa: dataempresa?.id }),
-  //   enabled: !!dataempresa,
-  // });
-  const ValidarPermisocobrar = (p) => {
-    const response = validarPermiso("Cobrar venta");
-    if (!response) return;
-    console.log("tipocobro",p.nombre)
-    setStatePantallaCobro({data:datadetalleventa, tipocobro: p.nombre });
-  };
 
-  return (
-    <Container stateMetodosPago={stateMetodosPago}>
-      <section className="areatipopago">
-        {datametodospago?.map((item, index) => {
-          return (
-            <article className="box" key={index}>
-              <Btn1
-                imagen={item.icono != "-" ? item.icono : null}
-                funcion={() => ValidarPermisocobrar( item )}
-                titulo={item.nombre}
-                border="0"
-                height="70px"
-                width="100%"
-              />
-            </article>
-          );
-        })}
-      </section>
-      <section className="totales">
-        {/* <div className="subtotal">
-          <span>
-            Sub total: <strong>$ 9.99</strong>{" "}
-          </span>
-          <span>IGV (18%): $ 0.00</span>
-          <span>
-            Sub total: <strong>$ 9.99</strong>{" "}
-          </span>
-        </div> */}
-        <TotalPos />
-      </section>
-    </Container>
-  );
+export function AreaTecladoPos() {
+  const { setStatePantallaCobro, stateMetodosPago } = useCartVentasStoreTemporal();
+  const { dataempresa } = useEmpresaStore();
+  const { dataMetodosPago: datametodospago } = useMetodosPagoStore();
+  const { validarPermiso } = useValidarPermisosOperativos();
+
+  const ValidarPermisocobrar = (p) => {
+    // --- DEBUG ---
+    console.log("1. Clic en botón de pago:", p.nombre);
+
+    const response = validarPermiso("Cobrar venta");
+    
+    // --- DEBUG ---
+    console.log("2. ¿Tiene permiso para 'Cobrar venta'?", response);
+
+    if (!response) {
+      // --- DEBUG ---
+      console.error("3. ¡Fallo! El usuario no tiene el permiso 'Cobrar venta'.");
+      return; // La función se detiene aquí
+    }
+    
+    setStatePantallaCobro({ tipocobro: p.nombre });
+  };
+
+  return (
+    // ¡LA CORRECCIÓN ESTÁ AQUÍ! ($stateMetodosPago)
+  	<Container $stateMetodosPago={stateMetodosPago}>
+  	  <section className="areatipopago">
+        {datametodospago?.map((item, index) => {
+          return (
+            <article className="box" key={index}>
+              <Btn1
+                imagen={item.icono != "-" ? item.icono : null}
+                funcion={() => ValidarPermisocobrar( item )}
+                titulo={item.nombre}
+                border="0"
+                height="70px"
+                width="100%"
+              />
+          	</article>
+      	  );
+  		})}
+  	  </section>
+  	  <section className="totales">
+  		<TotalPos />
+  	  </section>
+  	</Container>
+  );
 }
 const Container = styled.div`
   border: 1px solid ${({ theme }) => theme.color2};
@@ -74,23 +70,24 @@ const Container = styled.div`
     width: 450px;
     bottom: initial;
   }
-  .areatipopago {
-    display: ${({ stateMetodosPago }) => (stateMetodosPago ? "flex" : "none")};
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px;
-    @media ${Device.desktop} {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 10px;
-    }
-    .box {
-      flex: 1 1 40%;
-      display: flex;
-      gap: 10px;
-    }
-  }
+.areatipopago {
+    /* Corregido para usar transient props ($) */
+  	display: ${({ $stateMetodosPago }) => ($stateMetodosPago ? "flex" : "none")};
+  	flex-wrap: wrap;
+  	gap: 10px;
+  	padding: 10px;
+  	@media ${Device.desktop} {
+  	  display: flex;
+  	  flex-wrap: wrap;
+  	  gap: 10px;
+  	  padding: 10px;
+  	}
+  	.box {
+  	  flex: 1 1 40%;
+  	  display: flex;
+  	  gap: 10px;
+  	}
+  }
   .totales {
     display: flex;
     flex-direction: column;

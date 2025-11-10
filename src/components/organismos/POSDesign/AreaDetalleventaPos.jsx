@@ -1,198 +1,164 @@
 import styled from "styled-components";
-
 import { blur_in } from "../../../styles/keyframes";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import {
-  Btn1,
-  InputText2,
-  Lottieanimacion,
- 
-  useDetalleVentasStore,
-  useEmpresaStore,
-  useVentasStore,
+  Btn1,
+  InputText2,
+  Lottieanimacion,
+  useEmpresaStore,
 } from "../../../index";
 import animacionvacio from "../../../assets/vacioanimacion.json";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useState } from "react";
 import { Device } from "../../../styles/breakpoints";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+
+// --- ¡EL STORE CORRECTO! ---
+import { useCartVentasStoreTemporal } from "../../../store/CartVentasStoreTemporal";
+
 export function AreaDetalleventaPos() {
+  const { dataempresa } = useEmpresaStore();
+  const [editIndex, setEditIndex] = useState(null);
+  const [newCantidad, setNewCantidad] = useState(1);
 
-  const { dataempresa } = useEmpresaStore();
-  const [editIndex, setEditIndex] = useState(null);
-  const [newCantidad, setNewCantidad] = useState(1);
-  const { mostrardetalleventa, editarCantidadDetalleVenta,eliminardetalleventa } =
-    useDetalleVentasStore();
-    const queryClient = useQueryClient()
-  const { idventa } = useVentasStore();
-  const EditarCantidadDv = async (data) => {
-    const p = {
-      _id: data.id,
-      _cantidad: data.cantidad,
-    };
-    await editarCantidadDetalleVenta(p);
-  };
-  const {mutate:mutateEditarCantidadDV} = useMutation({
-    mutationKey: ["editar cantidad detalle venta"],
-    mutationFn: EditarCantidadDv,
-    onError:(error)=>{
-      toast.error(`Error: ${error.message}`)
-    },
-    onSuccess:()=>{
-      queryClient.invalidateQueries(["mostrar detalle venta"])
-    }
-  });
-  const EliminarDV =async(p) =>{
-    await eliminardetalleventa({id:p.id})
-  }
-  const {mutate:mutateEliminarDV} = useMutation({
-    mutationKey: ["editar cantidad detalle venta"],
-    mutationFn: EliminarDV,
-    onError:(error)=>{
-      toast.error(`Error: ${error.message}`)
-    },
-    onSuccess:()=>{
-      queryClient.invalidateQueries(["mostrar detalle venta"])
-    }
-  });
-  const handleEditClick = (index, cantidad) => {
-    setEditIndex(index);
-    setNewCantidad(cantidad);
-  };
-  const handleInputChange = (e) => {
-    const value = Math.max(0, parseFloat(e.target.value));
-    setNewCantidad(value);
-  };
-  const handleInputBlur = (item) => {
-    mutateEditarCantidadDV({id:item.id,cantidad:newCantidad})
-    setEditIndex(null); // Salir del modo edición
-  };
-  const handleKeyDown = (e, item) => {
-    if (e.key === "Enter") {
-      handleInputBlur(item); // Llama a `handleInputBlur` cuando se presiona Enter
-    }
-  };
-  const { data: items } = useQuery({
-    queryKey: ["mostrar detalle venta", { id_venta: idventa }],
-    queryFn: () => mostrardetalleventa({ id_venta: idventa }),
-  });
-  return (
-    <AreaDetalleventa className={items?.length > 0 ? "" : "animacion"}>
-    {items?.length > 0 ? (
-      items?.map((item, index) => {
-        return (
-          <Itemventa key={index}>
-            <article className="contentdescripcion">
-              <span className="descripcion">{item.descripcion}</span>
-              <span className="importe">
-                <strong>precio unit:</strong>
-                🪵
-                {FormatearNumeroDinero(
-                  item.precio_venta,
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}
-              </span>
-              <ContentTotalResponsive>
-                <span className="importerespo">
-                  <strong>precio unit:</strong>
-                  🪵
-                  {FormatearNumeroDinero(
-                    item.precio_venta,
-                    dataempresa?.currency,
-                    dataempresa?.iso
-                  )}
-                </span>
-                <article className="contentTotaldetalleventarespon">
-                  <span className="cantidad">
-                    <strong>
-                      {FormatearNumeroDinero(
-                        item.total,
-                        dataempresa?.currency,
-                        dataempresa?.iso
-                      )}
-                    </strong>
-                  </span>
-                  <span
-                    className="delete"
-                    onClick={() => mutateEliminarDV(item)}
-                  >
-                    <Icon icon="weui:delete-filled" width="24" height="24" />
-                  </span>
-                </article>
-              </ContentTotalResponsive>
-            </article>
-            <article className="contentbtn">
-              <Btn1
-                funcion={() =>
-                  mutateEditarCantidadDV({
-                    id: item.id,
-                    cantidad: item.cantidad + 1,
-                  })
-                }
-                width="20px"
-                height="35px"
-                icono={<Icon icon="mdi:add-bold" />}
-              ></Btn1>
-              {editIndex === index ? (
-                <InputText2>
-                  <input
-                    type="number"
-                    value={newCantidad}
-                    onChange={handleInputChange}
-                    onBlur={() => handleInputBlur(item)}
-                    onKeyDown={(e) => handleKeyDown(e, item)}
-                    className="form__field"
-                    min="1"
-                  />
-                </InputText2>
-              ) : (
-                <>
-                  <span className="cantidad">{item.cantidad}</span>
-                  <Icon
-                    icon="mdi:pencil"
-                    onClick={() => handleEditClick(index, item.cantidad)}
-                    className="edit-icon"
-                  />
-                </>
-              )}
+  // --- ¡CONECTADO AL CARRITO LOCAL! ---
+  const { 
+    items, 
+    addcantidadItem, 
+    restarcantidadItem, 
+    updateCantidadItem, 
+    removeItem 
+  } = useCartVentasStoreTemporal();
 
-              <Btn1
-                funcion={() =>
-                  mutateEditarCantidadDV({
-                    id: item.id,
-                    cantidad: item.cantidad - 1,
-                  })
-                }
-                width="20px"
-                height="35px"
-                icono={<Icon icon="subway:subtraction-1" />}
-              ></Btn1>
-            </article>
-            <article className="contentTotaldetalleventa">
-              <span className="cantidad">
-                <strong>
-                  {FormatearNumeroDinero(
-                    item.total,
-                    dataempresa?.currency,
-                    dataempresa?.iso
-                  )}
-                </strong>
-              </span>
-              <span className="delete" onClick={() => mutateEliminarDV(item)}>
-                <Icon icon="weui:delete-filled" width="24" height="24" />
-              </span>
-            </article>
-          </Itemventa>
-        );
-      })
-    ) : (
-      <Lottieanimacion animacion={animacionvacio} alto="200" ancho="200" />
-    )}
-  </AreaDetalleventa>
-  );
+  const handleEditClick = (index, cantidad) => {
+    setEditIndex(index);
+    setNewCantidad(cantidad);
+  };
+
+  const handleInputChange = (e) => {
+    const value = Math.max(1, parseFloat(e.target.value) || 1);
+    setNewCantidad(value);
+  };
+
+  const handleInputBlur = (item) => {
+    updateCantidadItem(item, newCantidad); // Llama a la función del store
+    setEditIndex(null);
+  };
+
+  const handleKeyDown = (e, item) => {
+    if (e.key === "Enter") {
+      handleInputBlur(item); 
+    }
+  };
+
+  return (
+    // Ahora leemos 'items.length' del store
+    <AreaDetalleventa className={items?.length > 0 ? "" : "animacion"}>
+    {items?.length > 0 ? (
+      items?.map((item, index) => {
+        return (
+          // Usamos una key más robusta
+          <Itemventa key={item._id_producto + '-' + item._id_almacen}>
+            <article className="contentdescripcion">
+              <span className="descripcion">{item.nombre}</span>
+              <span className="almacen">(Almacén: {item.nombre_almacen})</span>
+              <span className="importe">
+                <strong>Precio: </strong>
+                
+                {FormatearNumeroDinero(
+                  item._precio_venta, 
+                  dataempresa?.currency,
+                  dataempresa?.iso
+                )}
+              </span>
+              <ContentTotalResponsive>
+                <span className="importerespo">
+                  <strong>Precio: </strong>
+                  
+                  {FormatearNumeroDinero(
+                    item._precio_venta,
+                    dataempresa?.currency,
+                    dataempresa?.iso
+                  )}
+                </span>
+                <article className="contentTotaldetalleventarespon">
+                  <span className="cantidad">
+                    <strong>
+                      {FormatearNumeroDinero(
+                        item._total,
+                        dataempresa?.currency,
+                        dataempresa?.iso
+                      )}
+                    </strong>
+                  </span>
+                  <span
+                    className="delete"
+                    onClick={() => removeItem(item)} 
+                  >
+                    <Icon icon="weui:delete-filled" width="24" height="24" />
+                  </span>
+                </article>
+              </ContentTotalResponsive>
+            </article>
+            <article className="contentbtn">
+              <Btn1
+                funcion={() => addcantidadItem(item)}
+                width="20px"
+                height="35px"
+                icono={<Icon icon="mdi:add-bold" />}
+              ></Btn1>
+              {editIndex === index ? (
+                <InputText2>
+                  <input
+                    type="number"
+                    value={newCantidad}
+                    onChange={handleInputChange}
+                    onBlur={() => handleInputBlur(item)}
+                    onKeyDown={(e) => handleKeyDown(e, item)}
+                    className="form__field"
+                    min="1"
+                  />
+                </InputText2>
+              ) : (
+                <>
+                  <span className="cantidad">{item._cantidad}</span>
+                  <Icon
+            __       icon="mdi:pencil"
+                    onClick={() => handleEditClick(index, item._cantidad)} 
+                    className="edit-icon"
+                  />
+                </>
+              )}
+
+              <Btn1
+                funcion={() => restarcantidadItem(item)}
+                width="20px"
+                height="35px"
+                icono={<Icon icon="subway:subtraction-1" />}
+              ></Btn1>
+            </article>
+            <article className="contentTotaldetalleventa">
+              <span className="cantidad">
+                <strong>
+                  {FormatearNumeroDinero(
+                    item._total,
+                    dataempresa?.currency,
+                    dataempresa?.iso)}
+                </strong>
+              </span>
+              <span className="delete" onClick={() => removeItem(item)}> 
+                <Icon icon="weui:delete-filled" width="24" height="24" />
+              </span>
+            </article>
+          </Itemventa>
+        );
+      })
+    ) : (
+      <Lottieanimacion animacion={animacionvacio} alto="200" ancho="200" />
+    )}
+  </AreaDetalleventa>
+  );
 }
+// (ContentTotalResponsive, AreaDetalleventa, Itemventa)
 const ContentTotalResponsive = styled.div`
   display: flex;
   flex-direction: flex;

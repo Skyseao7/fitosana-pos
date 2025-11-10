@@ -1,134 +1,136 @@
 import styled from "styled-components";
 import {
-  Btn1,
+  //Btn1, // Ya no se usa aquí
   InputText2,
   ListaDesplegable,
   Reloj,
   useProductosStore,
-  useVentasStore,
-  useUsuariosStore,
-  useEmpresaStore,
+  // --- STORES DE DB ELIMINADOS ---
+  // useVentasStore,
+  // useUsuariosStore,
+  // useEmpresaStore,
   useAlmacenesStore,
-  useDetalleVentasStore,
+  // useDetalleVentasStore,
 } from "../../../index";
 import { v } from "../../../styles/variables";
 import { Device } from "../../../styles/breakpoints";
 import { Icon } from "@iconify/react";
 import { useEffect, useRef, useState } from "react";
 
-import { useFormattedDate } from "../../../hooks/useFormattedDate";
-import { useCierreCajaStore } from "../../../store/CierreCajaStore";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+// --- LÓGICA DE DB ELIMINADA ---
+// import { useFormattedDate } from "../../../hooks/useFormattedDate";
+// import { useCierreCajaStore } from "../../../store/CierreCajaStore";
+// import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { SelectList } from "../../ui/lists/SelectList";
+// import { SelectList } from "../../ui/lists/SelectList";
 import { useStockStore } from "../../../store/StockStore";
 import { useEliminarVentasIncompletasMutate } from "../../../tanstack/VentasStack";
 
+// --- ¡EL STORE CORRECTO! ---
+import { useCartVentasStoreTemporal } from "../../../store/CartVentasStoreTemporal";
+import { useUsuariosStore } from "../../../store/UsuariosStore";
+import { useCierreCajaStore } from "../../../store/CierreCajaStore";
+
 
 export function HeaderPos() {
-  const [stateLectora, setStateLectora] = useState(true);
   const [cantidadInput, setCantidadInput] = useState(1);
-  const [stateTeclado, setStateTeclado] = useState(false);
   const [stateListaproductos, setStateListaproductos] = useState(false);
-  const { setBuscador, dataProductos, selectProductos, buscador } =
-    useProductosStore();
   
-  const { datausuarios } = useUsuariosStore();
-  const { dataStockXAlmacenesYProducto, setStateModal } = useStockStore();
-
-  const { idventa, insertarVentas } = useVentasStore();
-
-  const { dataempresa } = useEmpresaStore();
-  const { dataCierreCaja } = useCierreCajaStore();
-  const { almacenSelectItem, dataAlmacenesXsucursal, setAlmacenSelectItem } =
-    useAlmacenesStore();
-  const { insertarDetalleVentas } = useDetalleVentasStore();
-  const queryClient = useQueryClient();
+  // --- Stores que SÍ necesitamos ---
+  const { setBuscador, dataProductos, selectProductos, buscador } = useProductosStore();
+  const { datausuarios } = useUsuariosStore(); // Para el UI
+  const { dataCierreCaja } = useCierreCajaStore(); // Para el UI y la sucursal
+  
+  // Carrito local y stock
+  const { addItem } = useCartVentasStoreTemporal();
+  const { dataStockXAlmacenesYProducto, setStateModal, mostrarStockXAlmacenesYProducto } = useStockStore(); // Asumimos que 'buscarStock' existe en tu store
+  const { setAlmacenSelectItem } = useAlmacenesStore();
 
   const buscadorRef = useRef(null);
-  const fechaactual = useFormattedDate();
 
-  function focusclick() {
+  // --- ¡TODA LA LÓGICA DE DB ANTIGUA (insertarventas, insertarDVentas, useMutation) HA SIDO ELIMINADA! ---
+  
+  // Nueva función controladora
+  async function handleProductoSeleccionado(producto) {
+    // 1. Limpiamos y seleccionamos el producto en la UI
+    selectProductos(producto); 
+    setBuscador("");
     buscadorRef.current.focus();
-    buscadorRef.current.value.trim() === ""
-      ? setStateListaproductos(false)
-      : setStateListaproductos(true);
+
+    // 3. Obtenemos el resultado del store (que se actualizó con buscarStock)
+    const stockData = await mostrarStockXAlmacenesYProducto({ id_producto: producto.id });
+    const cantidad = parseFloat(cantidadInput) || 1;
+
+    // 4. Decidimos qué hacer
+    if (!stockData || stockData.length === 0) {
+      toast.error(`No hay stock disponible para ${producto.nombre}.`);
+      setCantidadInput(1);
+      return;
+    }
+
+    if (stockData.length === 1) {
+      // --- CAMINO 2 (CORREGIDO) ---
+      // Solo hay un almacén, lo añadimos al carrito directamente
+      const almacenUnico = stockData[0];
+      
+      // Validar si hay stock suficiente
+      if (almacenUnico.stock < cantidad) {
+         toast.error(`Stock insuficiente. Solo quedan ${almacenUnico.stock} unidades.`);
+         return;
+      }
+
+      const productoParaCarrito = {
+        _id_producto: producto.id,
+        nombre: producto.nombre,
+        _precio_venta: producto.precio_venta,
+        _precio_compra: producto.precio_compra,
+        _cantidad: cantidad,
+        _id_almacen: almacenUnico.id_almacen, // ID del almacén único
+        nombre_almacen: almacenUnico.almacen.nombre,
+        _id_sucursal: dataCierreCaja?.caja?.id_sucursal,
+        _total: cantidad * producto.precio_venta,
+      };
+
+      addItem(productoParaCarrito); // ¡Añadido al carrito local!
+      toast.success(`${producto.nombre} añadido al carrito.`);
+      setCantidadInput(1);
+
+    } else {
+      // --- CAMINO 1 (El modal) ---
+      // Hay múltiples almacenes, abrimos el modal
+      setAlmacenSelectItem(null); // Limpiamos selección previa
+      setStateModal(true); // Abre SelectAlmacenModal.jsx (que ya está arreglado)
+    }
   }
+
+  //validar cantidad
+  const ValidarCantidad = (e) => {
+    const value = Math.max(1, parseFloat(e.target.value) || 1); // No permitir menos de 1
+    setCantidadInput(value);
+  };
+  
+  const {mutate} = useEliminarVentasIncompletasMutate();
+  
+  useEffect(() => {
+    buscadorRef.current.focus();
+    mutate() // Esto limpia ventas 'pendientes' al cargar, está bien.
+  }, []);
+
   function buscar(e) {
     setBuscador(e.target.value);
     let texto = e.target.value;
-    if (texto.trim() === "" || stateLectora) {
+    if (texto.trim() === "") {
       setStateListaproductos(false);
-    } else {
-      setStateListaproductos(true);
     }
   }
-
-  async function insertarventas() {
-    if (idventa === 0) {
-      const pventas = {
-        fecha: fechaactual,
-        id_usuario: datausuarios?.id,
-        id_sucursal: dataCierreCaja?.caja?.id_sucursal,
-        id_empresa: dataempresa?.id,
-        id_cierre_caja: dataCierreCaja?.id,
-      };
-
-      const result = await insertarVentas(pventas);
-      if (result?.id > 0) {
-        await insertarDVentas(result?.id);
-      }
-    } else {
-      await insertarDVentas(idventa);
-    }
-    setBuscador("");
-    buscadorRef.current.focus();
-    setCantidadInput(1);
-  }
-  async function insertarDVentas(idventa) {
-    const productosItemSelect =
-      useProductosStore.getState().productosItemSelect;
-    const pDetalleVentas = {
-      _id_venta: idventa,
-      _cantidad: parseFloat(cantidadInput) || 1,
-      _precio_venta: productosItemSelect.precio_venta,
-      _descripcion: productosItemSelect.nombre,
-      _id_producto: productosItemSelect.id,
-      _precio_compra: productosItemSelect.precio_compra,
-      _id_sucursal:  dataCierreCaja?.caja?.id_sucursal,
-      _id_almacen: almacenSelectItem?.id,
-    };
-    console.log("pDetalleVentas", pDetalleVentas);
-    await insertarDetalleVentas(pDetalleVentas);
-  }
-  const { mutate: mutationInsertarVentas } = useMutation({
-    mutationKey: ["insertar ventas"],
-    mutationFn: insertarventas,
-    onError: (error) => {
-      toast.error(`Error: ${error.message}`);
-      queryClient.invalidateQueries(["mostrar Stock XAlmacenes YProducto"]);
-      if (dataStockXAlmacenesYProducto) {
-        setStateModal(true);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["mostrar detalle venta"]);
-    },
-  });
-  //validar cantidad
-  const ValidarCantidad = (e) => {
-    const value = Math.max(0, parseFloat(e.target.value));
-    setCantidadInput(value);
-  };
-  const {mutate} = useEliminarVentasIncompletasMutate();
-  useEffect(() => {
-    buscadorRef.current.focus();
-   mutate()
-  }, []);
+  
+  // useEffect para el lector de código de barras
   useEffect(() => {
     let timeout;
     const texto = buscador.trim();
-    const isCodigoDeBarras = /^[0-9]{3,}$/.test(texto);
+    // Expresión regular más simple para códigos de barras
+    const isCodigoDeBarras = /^[0-9]{3,}$/.test(texto); 
+
     if (isCodigoDeBarras) {
       setStateListaproductos(false);
       timeout = setTimeout(() => {
@@ -136,38 +138,40 @@ export function HeaderPos() {
           (p) => p.codigo_barras === texto
         );
         if (productoEncontrado) {
-          selectProductos(productoEncontrado);
-          mutationInsertarVentas();
-          setBuscador("");
+          // ¡LLAMAMOS A LA NUEVA FUNCIÓN!
+          handleProductoSeleccionado(productoEncontrado);
         } else {
           toast.error("Producto no encontrado");
           setBuscador("");
         }
-      }, 100);
+      }, 100); // 100ms de debounce
     } else {
+      // Lógica para búsqueda manual
       if (texto.length > 1) {
-        timeout = setTimeout(() => {
-          setStateListaproductos(true);
-        }, 200);
+        setStateListaproductos(true);
       } else {
         setStateListaproductos(false);
       }
     }
-  }, [buscador]);
+    
+    // Limpiar el timeout
+    return () => clearTimeout(timeout);
+    
+  }, [buscador, dataProductos]); // Depender de dataProductos también
+
   return (
     <Header>
       <ContentSucursal>
-      <div>
-         <strong>SUCURSAL:&nbsp; </strong>{" "}
-        {dataCierreCaja.caja?.sucursales?.nombre}
-      </div>
-      |
-       <div>
-       <strong>CAJA:&nbsp; </strong>{" "}
-       {dataCierreCaja.caja?.descripcion}
-       </div>
-
+        <div>
+          <strong>SUCURSAL:&nbsp; </strong>{" "}
+          {dataCierreCaja.caja?.sucursales?.nombre}
+        </div>
+        |
+        <div>
+          <strong>CAJA:&nbsp; </strong> {dataCierreCaja.caja?.descripcion}
+        </div>
       </ContentSucursal>
+      
       <section className="contentprincipal">
         <Contentuser className="area1">
           <div className="textos">
@@ -175,11 +179,11 @@ export function HeaderPos() {
             <span>🧊{datausuarios?.roles?.nombre} </span>
           </div>
         </Contentuser>
-      
         <article className="contentfecha area3">
           <Reloj />
         </article>
       </section>
+
       <section className="contentbuscador">
         <article className="area1">
           <div className="contentCantidad">
@@ -204,29 +208,30 @@ export function HeaderPos() {
               placeholder="buscar..."
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown" && stateListaproductos) {
-                  e.preventDefault(); // Evita que el input capture el foco
-                  document.querySelector("[tabindex='0'").focus(); //mandar el foco a la lista
+                  e.preventDefault();
+                  document.querySelector("[tabindex='0']").focus();
                 }
               }}
             />
             <ListaDesplegable
-              funcioncrud={mutationInsertarVentas}
+              // ¡CAMBIADO! Ya no es 'funcioncrud'
+              // Le pasamos la nueva función controladora
+              funcion={(producto) => handleProductoSeleccionado(producto)}
               top="59px"
-              funcion={selectProductos}
+              // funcion={selectProductos} // La selección la hace el handle ahora
               setState={() => setStateListaproductos(!stateListaproductos)}
               data={dataProductos}
               state={stateListaproductos}
             />
           </InputText2>
         </article>
-        <article className="area2">
-          
-        
-        </article>
       </section>
     </Header>
   );
 }
+
+// ... (Pega aquí TODOS tus styled-components sin ningún cambio) ...
+// (Header, ContentSucursal, Contentuser, etc.)
 const Header = styled.div`
   grid-area: header;
   /* background-color: rgba(222, 18, 130, 0.5); */

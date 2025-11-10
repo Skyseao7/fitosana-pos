@@ -4,14 +4,10 @@ import { blur_in } from "../../styles/keyframes";
 import { v } from "../../styles/variables";
 import { PantallaCierreCaja } from "../organismos/POSDesign/CajaDesign/PantallaCierreCaja";
 import {
-  AreaDetalleventaPos,
-  AreaTecladoPos,
-  Btn1,
-  FooterPos,
-  HeaderPos,
-  InputText2,
-  Reloj,
-  useVentasStore,
+  AreaDetalleventaPos,
+  AreaTecladoPos,
+  FooterPos,
+  HeaderPos,
 } from "../../index";
 import { PantallaCobro } from "../organismos/POSDesign/PantallaCobro";
 import { Toaster } from "sonner";
@@ -20,42 +16,61 @@ import { useCierreCajaStore } from "../../store/CierreCajaStore";
 import { MenuFlotante } from "../organismos/POSDesign/MenuFlotante";
 import { SelectAlmacenModal } from "../organismos/POSDesign/SelectAlmacenModal";
 import { useStockStore } from "../../store/StockStore";
+// (tus imports de tanstack...)
 import { useBuscarProductosQuery } from "../../tanstack/ProductosStack";
 import { useMostrarAlmacenesXSucursalQuery } from "../../tanstack/AlmacenesStack";
 import { useMostrarStockXAlmacenesYProductoQuery } from "../../tanstack/StockStack";
 import { useMostrarMetodosPagoQuery } from "../../tanstack/MetodosPagoStack";
 import { useMostrarSerializacionesVentasQuery } from "../../tanstack/SerializacionStack";
 import { useMostrasrImpresorasPorCajaQuery } from "../../tanstack/ImpresorasStack";
+
+// --- ¡IMPORTACIONES NUEVAS! ---
+import { useEffect } from "react";
+import { useCartVentasStoreTemporal } from "../../store/CartVentasStoreTemporal";
+
+
 export function POSTemplate() {
-  const { statePantallaCobro } = useVentasStore();
+  // --- ¡ESCUCHANDO AL STORE CORRECTO! ---
+  const { statePantallaCobro, resetUiStates } = useCartVentasStoreTemporal(); // <-- Obtenemos la nueva función
+  
   const { stateIngresoSalida, stateCierreCaja } = useCierreCajaStore();
-  const { stateModal } = useStockStore();
+  const { stateModal } = useStockStore();
+  
+  // --- ¡LLAMADA AL 'RESET' EN LA CARGA! ---
+  useEffect(() => {
+    resetUiStates(); // Esto asegura que la pantalla de cobro esté cerrada al cargar
+  }, []); // El array vacío [] significa "ejecutar solo una vez"
+
+  // (Toda tu lógica de useQuery... se queda igual)
   useBuscarProductosQuery();
-  const { isLoading: isLoadingAlmacenXSucursal } =
-    useMostrarAlmacenesXSucursalQuery();
-  const { isLoading: isLoadingStockPorProductoYAlmacen } =
-    useMostrarStockXAlmacenesYProductoQuery();
-   
-    const {isLoading: isLoadingSerializacionesVentas} = useMostrarSerializacionesVentasQuery()
-    const {isLoading:isLoadingImpresoras} = useMostrasrImpresorasPorCajaQuery()
-  return (
-    <Container>
-      {stateModal && <SelectAlmacenModal />}
+  useMostrarAlmacenesXSucursalQuery();
+  useMostrarStockXAlmacenesYProductoQuery();
+  useMostrarMetodosPagoQuery();
+  useMostrarSerializacionesVentasQuery();
+  useMostrasrImpresorasPorCajaQuery();
 
-      {statePantallaCobro && <PantallaCobro />}
-
-      <HeaderPos />
-      <Main>
-        <Toaster position="top-center" />
-        <AreaDetalleventaPos />
-        <AreaTecladoPos />
-      </Main>
-      <FooterPos />
-      <MenuFlotante />
+  return (
+  	<Container>
+  	  {stateModal && <SelectAlmacenModal />}
       {stateIngresoSalida && <PantallaIngresoSalidaDinero />}
-      {stateCierreCaja && <PantallaCierreCaja />}
-    </Container>
-  );
+  	  {stateCierreCaja && <PantallaCierreCaja />}
+
+  	  {statePantallaCobro ? (
+        <PantallaCobro />
+      ) : (
+        <>
+          <HeaderPos />
+      	  <Main>
+      		<Toaster position="top-center" />
+      		<AreaDetalleventaPos />
+      		<AreaTecladoPos />
+      	  </Main>
+      	  <FooterPos />
+      	  <MenuFlotante />
+        </>
+      )}
+  	</Container>
+  );
 }
 const Container = styled.div`
   height: calc(100vh - 60px);

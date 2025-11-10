@@ -19,17 +19,28 @@ export const useCartVentasStoreTemporal = create(
   persist(
     (set) => ({
       ...initialState,
+/**
+       * Reinicia solo los estados de la UI, sin tocar el carrito.
+       * Esto previene que la app cargue en la pantalla de cobro.
+       */
+      resetUiStates: () =>
+        set({
+          statePantallaCobro: false,
+          stateMetodosPago: false,
+          tipocobro: "",
+        }),
+      // ----------------------------------------
 
-      addItem: (p) =>
-        set((state) => {
+  	  addItem: (p) =>
+  		set((state) => {
           // Verificar si el producto ya está en el carrito
           const existingItem = state.items.find(
-            (item) => item._id_producto === p._id_producto
+            (item) => item._id_producto === p._id_producto && item._id_almacen === p._id_almacen
           );
           if (existingItem) {
             // Si el producto ya está en el carrito, aumentar la cantidad
             const updatedItems = state.items.map((item) => {
-              if (item._id_producto === p._id_producto) {
+              if (item._id_producto === p._id_producto && item._id_almacen === p._id_almacen) {
                 const newQuantity = item._cantidad + (p._cantidad || 1);
                 return {
                   ...item,

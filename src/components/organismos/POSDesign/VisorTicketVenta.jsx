@@ -9,7 +9,7 @@ export function VisorTicketVenta({setState}) {
   const {items} = useVentasStore()
   const onGenerateTicket = async (output) => {
     const dataempresa = {
-      logo: "https://cdn.forbes.com.mx/2020/03/El-sen%CC%83or-de-los-anillos-Golum-.jpg",
+      logo: "https://i.ibb.co/rGtGqG3Y/logobyn.png",
       productos: items,
     };
     const response = await ticket(output, dataempresa);

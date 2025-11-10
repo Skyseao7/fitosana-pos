@@ -28,7 +28,7 @@ export async function MostrarStockXAlmacenesYProducto(p) {
   const { data } = await supabase
     .from(tabla)
     .select(`*, almacen(*)`)
-    .eq("id_almacen", p.id_almacen)
+    /* .eq("id_almacen", p.id_almacen) */
     .eq("id_producto", p.id_producto)
     .gt("stock", 0);
   return data;

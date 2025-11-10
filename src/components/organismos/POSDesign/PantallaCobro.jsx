@@ -4,76 +4,80 @@ import styled from "styled-components";
 
 import { IngresoCobro } from "./IngresoCobro";
 import { VisorTicketVenta } from "./VisorTicketVenta";
-import { useVentasStore } from "../../../store/VentasStore";
-import { useDetalleVentasStore } from "../../../store/DetalleVentasStore";
+// --- STORES INCORRECTOS ELIMINADOS ---
+// import { useVentasStore } from "../../../store/VentasStore";
+// import { useDetalleVentasStore } from "../../../store/DetalleVentasStore";
+
+// --- ¡EL STORE CORRECTO! ---
+import { useCartVentasStoreTemporal } from "../../../store/CartVentasStoreTemporal";
+
 import { Switch } from "../../ui/toggles/Switch";
 import { useImpresorasStore } from "../../../store/ImpresorasStore";
 import { useEditarImpresorasMutation } from "../../../tanstack/ImpresorasStack";
+
 export function PantallaCobro() {
-  const [stateVerticket, setStateVerticker] = useState(false);
-  const { setStatePantallaCobro, tipocobro } = useVentasStore();
+  const [stateVerticket, setStateVerticker] = useState(false);
+  // --- ¡CONECTADO AL STORE CORRECTO! ---
+  const { resetUiStates } = useCartVentasStoreTemporal(); // Esta es la función para "volver"
+  
   const ingresoCobroRef = useRef();
-  const { datadetalleventa } = useDetalleVentasStore();
-  const { statePrintDirecto, setStatePrintDirecto } = useImpresorasStore();
-  const { mutate, isPending } = useEditarImpresorasMutation();
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault(); // Evita el comportamiento predeterminado de presionar Enter (como cerrar la vista)
-        if (ingresoCobroRef.current) {
-          ingresoCobroRef.current.mutateAsync();
-        }
-      }
-    };
-    // Añade el event listener al document
-    document.addEventListener("keydown", handleKeyDown);
-    // Limpia el event listener al desmontar el componente
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-  return (
-    <Container>
-      <section className="contentingresocobro">
-        {stateVerticket && (
-          <VisorTicketVenta
-            setState={() => setStateVerticker(!stateVerticket)}
-          />
-        )}
+  // const { datadetalleventa } = useDetalleVentasStore(); // <-- Eliminado
+  const { statePrintDirecto, setStatePrintDirecto } = useImpresorasStore();
+  const { mutate, isPending } = useEditarImpresorasMutation();
 
-        <article className="contentverticket">
-          <ContentSwich>
-            imprimir directo
-            <Switch
-              state={statePrintDirecto}
-              setState={() => {
-                setStatePrintDirecto();
-                mutate();
-              }}
-            />
-          </ContentSwich>
-        </article>
-        {isPending ? (
-          <spa>guardando cambios de impresora...</spa>
-        ) : (
-          <IngresoCobro ref={ingresoCobroRef} />
-        )}
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+        if (event.key === "Enter") {
+        event.preventDefault(); 
+      	if (ingresoCobroRef.current) {
+          ingresoCobroRef.current.mutateAsync();
+  	  	}
+  	  }
+  	};
+  	document.addEventListener("keydown", handleKeyDown);
+  	return () => {
+  	  document.removeEventListener("keydown", handleKeyDown);
+  	};
+  }, []);
 
-        <article
-          className="contentverticket"
-          onClick={() =>
-            setStatePantallaCobro({
-              data: datadetalleventa,
-              tipocobro: tipocobro,
-            })
-          }
-        >
-          <Icon className="icono" icon="ep:arrow-left-bold" />
-          <span>volver</span>
-        </article>
-      </section>
-    </Container>
-  );
+  return (
+  	<Container>
+  	  <section className="contentingresocobro">
+  		{stateVerticket && (
+  		  <VisorTicketVenta
+  			setState={() => setStateVerticker(!stateVerticket)}
+  		  />
+  		)}
+
+  		<article className="contentverticket">
+  		  <ContentSwich>
+  			imprimir directo
+  			<Switch
+  			  state={statePrintDirecto}
+  			  setState={() => {
+  				setStatePrintDirecto();
+  				mutate();
+  			  }}
+  			/>
+  		  </ContentSwich>
+  		</article>
+  		{isPending ? (
+  		  <spa>guardando cambios de impresora...</spa>
+  		) : (
+  		  <IngresoCobro ref={ingresoCobroRef} />
+  		)}
+
+        {/* --- ¡BOTÓN "VOLVER" ARREGLADO! --- */}
+  		<article
+  		  className="contentverticket"
+  		  onClick={resetUiStates} // Llama a la función correcta para cerrar
+  		>
+  		  <Icon className="icono" icon="ep:arrow-left-bold" />
+  		  <span>volver</span>
+  		</article>
+  	  </section>
+  	</Container>
+  );
 }
 const Container = styled.div`
   position: absolute;

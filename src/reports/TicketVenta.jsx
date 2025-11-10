@@ -37,27 +37,32 @@ const TicketVenta = async (output, data) => {
       { text: "TOTAL", style: "tProductsHeader", alignment: "right" },
     ],
     ...data.productos.flatMap((item) => [
-      [
-        {
-          text: `${item.productos?.codigo_barras} - ${item.productos.nombre}`,
-          style: "tProductsBody",
-          colSpan: 4,
-        },
-        {},
-        {},
-        {},
-      ],
-      [
-        { text: item.cantidad, style: "tProductsBody", alignment: "center" },
-        { text: "unidad", style: "tProductsBody", alignment: "center" },
-        {
-          text: item.precio_venta,
-          style: "tProductsBody",
-          alignment: "right",
-        },
-        { text: item.total, style: "tProductsBody", alignment: "right" },
-      ],
-    ]),
+      [
+        {
+          // --- ¡CORREGIDO! ---
+          // Lee 'item.nombre' directamente
+          text: `${item.nombre}`, 
+          style: "tProductsBody",
+          colSpan: 4,
+        },
+        {},
+        {},
+        {},
+      ],
+      [
+          // --- ¡CORREGIDO! ---
+        { text: item._cantidad, style: "tProductsBody", alignment: "center" },
+        { text: "unidad", style: "tProductsBody", alignment: "center" },
+        {
+          // --- ¡CORREGIDO! ---
+          text: item._precio_venta,
+          style: "tProductsBody",
+          alignment: "right",
+      	},
+          // --- ¡CORREGIDO! ---
+        { text: item._total, style: "tProductsBody", alignment: "right" },
+  	  ],
+  	]),
   ];
   const formasPagoTableBody = [
     [

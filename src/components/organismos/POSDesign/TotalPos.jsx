@@ -2,45 +2,49 @@ import styled from "styled-components";
 import { Btn1 } from "../../moleculas/Btn1";
 import { Device } from "../../../styles/breakpoints";
 import { Icon } from "@iconify/react";
-import { useDetalleVentasStore, useEmpresaStore, useVentasStore } from "../../..";
+import { 
+  useEmpresaStore,
+  // --- ¡STORES INCORRECTOS ELIMINADOS! ---
+  // useDetalleVentasStore, 
+  // useVentasStore 
+
+  // --- ¡EL STORE CORRECTO! ---
+  useCartVentasStoreTemporal
+} from "../../..";
 import {FormatearNumeroDinero} from "../../../utils/Conversiones"
 import {useValidarPermisosOperativos} from "../../../hooks/useValidarPermisosOperativos"
+
 export function TotalPos() {
-  const {setStateMetodosPago} = useVentasStore()
-  const {total} = useDetalleVentasStore()
-  const {dataempresa} = useEmpresaStore()
-  const {validarPermiso} = useValidarPermisosOperativos()
-  // const textLength = total.length;
-  // // Definir las clases CSS para diferentes longitudes de texto
-  // let textSizeClass = 'medium-text';
-  // if (textLength < 10) {
-  //   textSizeClass = 'large-text';
-  // } else if (textLength < 20) {
-  //   textSizeClass = 'medium-text';
-  // } else {
-  //   textSizeClass = 'small-text';
-  // }
-  const validarPermisoCobrar = ()=>{
-    const hasPermission = validarPermiso("Cobrar venta")
-    if(!hasPermission) return;
-    setStateMetodosPago()
-  }
-  return (
-    <Container>
-    <section className="imagen">
-        <img src="https://i.ibb.co/XrqNS4GM/Leaf-Pin.webp" alt="Leaf-Pin" border="0" />
-      </section>
-      <section className="contentTotal">
-        <section className="contentTituloTotal">
-          <Btn1 border="2px"  bgcolor="#ffffff"   color="#207c33" funcion={validarPermisoCobrar} titulo="COBRAR" icono={<Icon icon="fluent-emoji:money-with-wings" />} />
-         
-        </section>
-        <span>{FormatearNumeroDinero(total,dataempresa?.currency,dataempresa?.iso)}</span>
-      
-      </section> 
-    </Container>
-  );
+  // --- ¡CONECTADO AL STORE CORRECTO! ---
+  const { setStateMetodosPago, total } = useCartVentasStoreTemporal();
+  const {dataempresa} = useEmpresaStore()
+  const {validarPermiso} = useValidarPermisosOperativos()
+
+  const validarPermisoCobrar = ()=>{
+    const hasPermission = validarPermiso("Cobrar venta")
+    if(!hasPermission) return;
+    // Ahora llama a la función del store correcto
+    setStateMetodosPago() 
+  }
+
+  return (
+    <Container>
+    <section className="imagen">
+        <img src="https://i.ibb.co/XrqNS4GM/Leaf-Pin.webp" alt="Leaf-Pin" border="0" />
+      </section>
+      <section className="contentTotal">
+        <section className="contentTituloTotal">
+          <Btn1 border="2px"  bgcolor="#ffffff"   color="#207c33" funcion={validarPermisoCobrar} titulo="COBRAR" icono={<Icon icon="fluent-emoji:money-with-wings" />} />
+         
+        </section>
+        {/* ¡AHORA MOSTRARÁ EL TOTAL CORRECTO! */}
+        <span>{FormatearNumeroDinero(total,dataempresa?.currency,dataempresa?.iso)}</span>
+      
+      </section> 
+    </Container>
+  );
 }
+
 const Container = styled.div`
   display: flex;
   text-align: center;
