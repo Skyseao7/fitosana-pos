@@ -71,6 +71,7 @@ export const useCartVentasStoreTemporal = create(
             descuento: 0,
             descuento_es_porcentaje: false,
             detalle: "",
+            es_fraccionada: false,
           };
 
   		  if (existingItem) {
@@ -104,11 +105,12 @@ export const useCartVentasStoreTemporal = create(
           if (!itemToUpdate) return state;
 
           // ¡NUEVO! Validamos el stock desde el modal
-          const nuevaCantidad = parseFloat(newDatos._cantidad) || 0;
-          if (nuevaCantidad > itemToUpdate._stock_maximo) {
-             toast.error(`Stock insuficiente. Solo quedan ${itemToUpdate._stock_maximo} unidades.`);
-             // No actualizamos la cantidad, pero sí el resto
-             newDatos._cantidad = itemToUpdate._cantidad; 
+          if (!newDatos.es_fraccionada) {
+            const nuevaCantidad = parseFloat(newDatos._cantidad) || 0;
+            if (nuevaCantidad > itemToUpdate._stock_maximo) {
+              toast.error(`Stock insuficiente. Solo quedan ${itemToUpdate._stock_maximo} unidades.`);
+              newDatos._cantidad = itemToUpdate._cantidad; 
+            }
           }
           
           const updatedItems = state.items.map(item => {
@@ -148,10 +150,10 @@ export const useCartVentasStoreTemporal = create(
   		set((state) => {
   		  const updatedItems = state.items.map((item) => {
   			if (item.id === itemToUpdate.id) { 
-              // ¡NUEVA VALIDACIÓN DE STOCK!
-              if (item._cantidad >= item._stock_maximo) {
+              // ¡Solo validamos si NO es fraccionada!
+              if (!itemToUpdate.es_fraccionada && item._cantidad >= item._stock_maximo) {
                 toast.error(`Stock máximo alcanzado: ${item._stock_maximo}`);
-                return item; // No hacer nada
+                return item;
               }
   			  const updatedItem = { ...item, _cantidad: item._cantidad + 1 };
   			  return updatedItem;
@@ -188,9 +190,10 @@ export const useCartVentasStoreTemporal = create(
           const newQty = parseFloat(cantidad) || 0;
 
           // ¡NUEVA VALIDACIÓN DE STOCK!
-          if (newQty > itemToUpdate._stock_maximo) {
+          // ¡Solo validamos si NO es fraccionada!
+          if (!itemToUpdate.es_fraccionada && newQty > itemToUpdate._stock_maximo) {
              toast.error(`Stock insuficiente. Solo quedan ${itemToUpdate._stock_maximo} unidades.`);
-             return state; // No hacer nada, no actualiza
+             return state;
           }
 
   		  const updatedItems = state.items.map((item) => {

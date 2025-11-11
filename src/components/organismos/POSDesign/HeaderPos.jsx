@@ -84,6 +84,7 @@ export function HeaderPos() {
         _id_producto: producto.id,
         nombre: producto.nombre,
         _precio_venta: producto.precio_venta,
+        p_compra: parseFloat(String(producto.p_compra).replace("s/.", "").replace("S/.", "")) || 0,
         _precio_compra: producto.precio_compra,
         _cantidad: cantidad,
         _id_almacen: almacenUnico.id_almacen,

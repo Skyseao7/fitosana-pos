@@ -74,7 +74,7 @@ export function ProductosTemplate() {
     generarCodigo();
   }
 
-  console.log("Texto Búsqueda:", textoBusquedaGeneral); // 👈
+  console.log("Texto Búsqueda:", textoBusquedaGeneral);
 
   if (isLoading && !dataProductosOriginal) { return <span>Cargando productos...</span>; }
   if (isError) { return <span>Error al cargar productos: {error?.message || 'Error desconocido'}</span>; }

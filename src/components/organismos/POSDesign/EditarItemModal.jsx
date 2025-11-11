@@ -10,7 +10,7 @@ export function EditarItemModal({ item, onClose }) {
   const { updateItem } = useCartVentasStoreTemporal();
   const { dataAlmacenesXsucursal } = useAlmacenesStore(); 
   const { dataempresa } = useEmpresaStore();
-
+  const [ventaFraccionada, setVentaFraccionada] = useState(item.es_fraccionada || false);
   // Estados locales para todos los campos del modal
   const [nombre, setNombre] = useState(item.nombre_modificado ?? item.nombre);
   const [precio, setPrecio] = useState(
@@ -35,6 +35,17 @@ export function EditarItemModal({ item, onClose }) {
     setTotalCalculado(subtotal - descuentoCalculado);
   }, [precio, cantidad, descuento, esPorcentaje]);
 
+  // Cambia el precio automáticamente cuando marcas/desmarcas C/U
+useEffect(() => {
+    if (ventaFraccionada) {
+      // Si el usuario marca C/U, ponemos el precio por unidad
+      setPrecio(item.p_compra || 0);
+    } else {
+      // Si desmarca, volvemos al precio de caja
+      setPrecio(item._precio_venta);
+    }
+  }, [ventaFraccionada]); // Se ejecuta cada vez que el check cambia
+
 const handleGuardar = () => {
     // --- ¡CORRECCIÓN #2! ---
     // Convertimos el ID del almacén (string) a número antes de comparar
@@ -50,6 +61,7 @@ const handleGuardar = () => {
   	  _id_almacen: idAlmacenNum, // Usamos el ID como número
   	  nombre_almacen: almacenSeleccionado?.nombre || item.nombre_almacen,
   	  detalle: detalle,
+      es_fraccionada: ventaFraccionada,
   	});
   	onClose();
   };
@@ -71,12 +83,17 @@ const handleGuardar = () => {
                 <StyledInput type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} />
               </FormGroup> 
             </Col>
+            
             <Col>
               <FormGroup>
                 <StyledLabel>Cantidad</StyledLabel>
                 <StyledInput type="number" value={cantidad} onChange={(e) => setCantidad(e.target.value)} />
               </FormGroup>
             </Col>
+            <ColCheck>
+  			  <input type="checkbox" id="fraccionada" checked={ventaFraccionada} onChange={(e) =>       setVentaFraccionada(e.target.checked)} />
+  			  <StyledLabel htmlFor="fraccionada">Vender por C/U</StyledLabel>
+  			</ColCheck>
           </Row>
 
           <Row>

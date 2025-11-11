@@ -57,6 +57,7 @@ export const SelectAlmacenModal = () => {
       _id_producto: productosItemSelect.id,
       nombre: productosItemSelect.nombre,
       _precio_venta: productosItemSelect.precio_venta,
+      p_compra: parseFloat(String(productosItemSelect.p_compra).replace("s/.", "").replace("S/.", "")) || 0,
       _precio_compra: productosItemSelect.precio_compra,
       _cantidad: parseFloat(cantidadInput) || 1,
       _id_almacen: almacenSeleccionado?.id_almacen,
