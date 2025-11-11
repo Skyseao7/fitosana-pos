@@ -15,16 +15,8 @@ export function AreaTecladoPos() {
 
   const ValidarPermisocobrar = (p) => {
     // --- DEBUG ---
-    console.log("1. Clic en botón de pago:", p.nombre);
-
     const response = validarPermiso("Cobrar venta");
-    
-    // --- DEBUG ---
-    console.log("2. ¿Tiene permiso para 'Cobrar venta'?", response);
-
     if (!response) {
-      // --- DEBUG ---
-      console.error("3. ¡Fallo! El usuario no tiene el permiso 'Cobrar venta'.");
       return; // La función se detiene aquí
     }
     

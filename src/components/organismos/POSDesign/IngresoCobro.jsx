@@ -36,7 +36,8 @@ export const IngresoCobro = forwardRef((props, ref) => {
     items: itemsDelCarrito,
     total: totalDelCarrito,
     tipocobro,
-    resetState: resetCarrito
+    resetState: resetCarrito,
+    getItemTotal
   } = useCartVentasStoreTemporal();
 
   // --- STORES DE FUNCIONES (¡SIN DATOS!) ---
@@ -157,17 +158,23 @@ const mutation = useMutation({
   	  const newVentaId = nuevaVenta.id;
   	  if (!newVentaId) throw new Error("Error al crear la cabecera de la venta");
 
-      // 3. Preparar e Insertar DETALLES (los productos)
-  	  const detallesParaInsertar = itemsDelCarrito.map(item => ({
-  		 _id_venta: newVentaId, 
-  		 _cantidad: item._cantidad,
-  		 _precio_venta: item._precio_venta,
-  		 _descripcion: item.nombre,
-  		 _id_producto: item._id_producto,
-  		 _precio_compra: item._precio_compra,
-  		 _id_sucursal: item._id_sucursal,
-  		 _id_almacen: item._id_almacen,
-  	  }));
+      // 3. Preparar e Insertar DETALLES (¡LÓGICA CORREGIDA!)
+  	  const detallesParaInsertar = itemsDelCarrito.map(item => {
+        const totalFinalItem = getItemTotal(item); 
+        const precioUnitarioFinal = (item._cantidad > 0) ? (totalFinalItem / item._cantidad) : 0;
+        
+        return {
+          id_venta: newVentaId,
+          cantidad: item._cantidad,
+          precio_venta: precioUnitarioFinal,
+          total: totalFinalItem, 
+          descripcion: item.nombre_modificado ?? item.nombre, 
+          id_producto: item.es_fraccionada ? null : item._id_producto, 
+          id_almacen: item.es_fraccionada ? null : item._id_almacen, 
+          precio_compra: item.es_fraccionada ? 0 : item._precio_compra, 
+          id_sucursal: item._id_sucursal, 
+        }
+  	  });
       // (Tu trigger de stock se disparará aquí)
   	  await insertarDetalleVentas(detallesParaInsertar); 
 

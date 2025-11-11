@@ -24,46 +24,52 @@ const TicketVenta = async (output, data) => {
       : data.dataempresa?.logo
   );
   const productTableBody = [
-    [
-      { text: "CÓDIGO - DESCRIPCIÓN", colSpan: 4, style: "tProductsHeader" },
-      {},
-      {},
-      {},
-    ],
-    [
-      { text: "CANT.", style: "tProductsHeader" },
-      { text: "UM", style: "tProductsHeader", alignment: "center" },
-      { text: "PRECIO", style: "tProductsHeader", alignment: "right" },
-      { text: "TOTAL", style: "tProductsHeader", alignment: "right" },
-    ],
-    ...data.productos.flatMap((item) => [
-      [
-        {
-          // --- ¡CORREGIDO! ---
-          // Lee 'item.nombre' directamente
-          text: `${item.nombre}`, 
-          style: "tProductsBody",
-          colSpan: 4,
-        },
-        {},
-        {},
-        {},
-      ],
-      [
-          // --- ¡CORREGIDO! ---
-        { text: item._cantidad, style: "tProductsBody", alignment: "center" },
-        { text: "unidad", style: "tProductsBody", alignment: "center" },
-        {
-          // --- ¡CORREGIDO! ---
-          text: item._precio_venta,
-          style: "tProductsBody",
-          alignment: "right",
-      	},
-          // --- ¡CORREGIDO! ---
-        { text: item._total, style: "tProductsBody", alignment: "right" },
-  	  ],
-  	]),
-  ];
+    [
+  	  { text: "CANT.", style: "tProductsHeader", alignment: "center" },
+  	  { text: "DESCRIPCIÓN", style: "tProductsHeader", colSpan: 2 },
+  	  {},
+  	  { text: "TOTAL", style: "tProductsHeader", alignment: "right" },
+  	],
+  	...data.productos.flatMap((item) => {
+      // --- LÓGICA DE CÁLCULO (copiada de tu store) ---
+      const precioBase = (item.precio_modificado !== null && item.precio_modificado !== undefined)
+        ? parseFloat(item.precio_modificado)
+        : parseFloat(item._precio_venta);
+      const cantidad = parseFloat(item._cantidad) || 0;
+      const subtotal = precioBase * cantidad;
+      const descuentoNum = parseFloat(item.descuento) || 0;
+      let descuentoCalculado = 0;
+      if (item.descuento_es_porcentaje) {
+        descuentoCalculado = subtotal * (descuentoNum / 100);
+      } else {
+        descuentoCalculado = descuentoNum;
+      }
+      const totalFinalItem = subtotal - descuentoCalculado;
+      // --- FIN DE LA LÓGICA ---
+
+      return [
+        [
+          { 
+            text: item._cantidad, 
+            style: "tProductsBody", 
+            alignment: "center" 
+          },
+          {
+            // Muestra el nombre (y el detalle si existe)
+            text: `${item.nombre_modificado ?? item.nombre}${item.detalle ? `\n(${item.detalle})` : ''}`, 
+            style: "tProductsBody",
+            colSpan: 2,
+          },
+          {},
+          { 
+            text: totalFinalItem.toFixed(2), 
+            style: "tProductsBody", 
+            alignment: "right" 
+          },
+        ],
+      ];
+    }),
+  ];
   const formasPagoTableBody = [
     [
       {

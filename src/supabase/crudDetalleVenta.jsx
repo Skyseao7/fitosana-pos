@@ -2,10 +2,13 @@ import Swal from "sweetalert2";
 import { supabase } from "../index";
 const tabla = "detalle_venta";
 export async function InsertarDetalleVentas(p) {
-  const { error } = await supabase.rpc("insertardetalleventa", p);
-  if (error) {
-    throw new Error(error.message);
-  }
+  // 'p' es ahora un array de productos [{}, {}, {}]
+  // Usamos .insert() que SÍ acepta un array, en lugar de .rpc()
+  const { error } = await supabase.from(tabla).insert(p); 
+  if (error) {
+    // Lanzamos el error para que useMutation() pueda capturarlo
+    throw new Error(error.message);
+  }
 }
 export async function EditarCantidadDetalleVenta(p) {
   const { error } = await supabase.rpc("editarcantidaddv", p);
