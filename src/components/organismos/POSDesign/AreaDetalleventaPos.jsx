@@ -3,7 +3,6 @@ import { blur_in } from "../../../styles/keyframes";
 import { FormatearNumeroDinero } from "../../../utils/Conversiones";
 import {
   Btn1,
-  InputText2,
   Lottieanimacion,
   useEmpresaStore,
 } from "../../../index";
@@ -12,186 +11,93 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { useState } from "react";
 import { Device } from "../../../styles/breakpoints";
 
-// --- ¡EL STORE CORRECTO! ---
 import { useCartVentasStoreTemporal } from "../../../store/CartVentasStoreTemporal";
 
-export function AreaDetalleventaPos() {
+export function AreaDetalleventaPos({ onEditItem }) {
   const { dataempresa } = useEmpresaStore();
-  const [editIndex, setEditIndex] = useState(null);
-  const [newCantidad, setNewCantidad] = useState(1);
 
   // --- ¡CONECTADO AL CARRITO LOCAL! ---
   const { 
     items, 
     addcantidadItem, 
     restarcantidadItem, 
-    updateCantidadItem, 
-    removeItem 
+    removeItem,
+    getItemTotal 
   } = useCartVentasStoreTemporal();
 
-  const handleEditClick = (index, cantidad) => {
-    setEditIndex(index);
-    setNewCantidad(cantidad);
-  };
-
-  const handleInputChange = (e) => {
-    const value = Math.max(1, parseFloat(e.target.value) || 1);
-    setNewCantidad(value);
-  };
-
-  const handleInputBlur = (item) => {
-    updateCantidadItem(item, newCantidad); // Llama a la función del store
-    setEditIndex(null);
-  };
-
-  const handleKeyDown = (e, item) => {
-    if (e.key === "Enter") {
-      handleInputBlur(item); 
-    }
-  };
-
   return (
-    // Ahora leemos 'items.length' del store
-    <AreaDetalleventa className={items?.length > 0 ? "" : "animacion"}>
-    {items?.length > 0 ? (
-      items?.map((item, index) => {
-        return (
-          // Usamos una key más robusta
-          <Itemventa key={item._id_producto + '-' + item._id_almacen}>
-            <article className="contentdescripcion">
-              <span className="descripcion">{item.nombre}</span>
+    // ¡VOLVEMOS A USAR UN FRAGMENT (<>)!
+    <> 
+  	<AreaDetalleventa className={items?.length > 0 ? "" : "animacion"}>
+  	{items?.length > 0 ? (
+  	  items?.map((item, index) => {
+        const totalItem = getItemTotal(item); 
+  	  	return (
+  		  <Itemventa 
+            key={item.id} 
+            onClick={() => onEditItem(item)} // <-- ¡Llama a la función del padre!
+          >
+  			<article className="contentdescripcion">
+              {/* Muestra el nombre modificado si existe */}
+  			  <span className="descripcion">{item.nombre_modificado ?? item.nombre}</span>
               <span className="almacen">(Almacén: {item.nombre_almacen})</span>
-              <span className="importe">
-                <strong>Precio: </strong>
-                
-                {FormatearNumeroDinero(
-                  item._precio_venta, 
-                  dataempresa?.currency,
-                  dataempresa?.iso
-                )}
-              </span>
-              <ContentTotalResponsive>
-                <span className="importerespo">
-                  <strong>Precio: </strong>
-                  
-                  {FormatearNumeroDinero(
-                    item._precio_venta,
-                    dataempresa?.currency,
-                    dataempresa?.iso
-                  )}
-                </span>
-                <article className="contentTotaldetalleventarespon">
-                  <span className="cantidad">
-                    <strong>
-                      {FormatearNumeroDinero(
-                        item._total,
-                        dataempresa?.currency,
-                        dataempresa?.iso
-                      )}
-                    </strong>
-                  </span>
-                  <span
-                    className="delete"
-                    onClick={() => removeItem(item)} 
-                  >
-                    <Icon icon="weui:delete-filled" width="24" height="24" />
-                  </span>
-                </article>
-              </ContentTotalResponsive>
-            </article>
-            <article className="contentbtn">
-              <Btn1
-                funcion={() => addcantidadItem(item)}
-                width="20px"
-                height="35px"
-                icono={<Icon icon="mdi:add-bold" />}
-              ></Btn1>
-              {editIndex === index ? (
-                <InputText2>
-                  <input
-                    type="number"
-                    value={newCantidad}
-                    onChange={handleInputChange}
-                    onBlur={() => handleInputBlur(item)}
-                    onKeyDown={(e) => handleKeyDown(e, item)}
-                    className="form__field"
-                    min="1"
-                  />
-                </InputText2>
-              ) : (
-                <>
-                  <span className="cantidad">{item._cantidad}</span>
-                  <Icon
-            __       icon="mdi:pencil"
-                    onClick={() => handleEditClick(index, item._cantidad)} 
-                    className="edit-icon"
-                  />
-                </>
-              )}
+  			  <span className="importe">
+  				<strong>Precio: </strong>
+  				
+  				{FormatearNumeroDinero(
+                  // Muestra el precio modificado si existe
+  				  item.precio_modificado ?? item._precio_venta, 
+  				  dataempresa?.currency,
+  				  dataempresa?.iso
+  				)}
+  			  </span>
+              {/* ... (Tu 'ContentTotalResponsive' se queda igual, pero usa las props corregidas) ... */}
+  			</article>
 
-              <Btn1
-                funcion={() => restarcantidadItem(item)}
-                width="20px"
-                height="35px"
-                icono={<Icon icon="subway:subtraction-1" />}
-              ></Btn1>
-            </article>
-            <article className="contentTotaldetalleventa">
-              <span className="cantidad">
-                <strong>
-                  {FormatearNumeroDinero(
-                    item._total,
-                    dataempresa?.currency,
-                    dataempresa?.iso)}
-                </strong>
-              </span>
-              <span className="delete" onClick={() => removeItem(item)}> 
-                <Icon icon="weui:delete-filled" width="24" height="24" />
-              </span>
-            </article>
-          </Itemventa>
-        );
-      })
-    ) : (
-      <Lottieanimacion animacion={animacionvacio} alto="200" ancho="200" />
-    )}
+  			<article className="contentbtn">
+  			  <Btn1
+  				funcion={(e) => { e.stopPropagation(); addcantidadItem(item); }} // Detener la propagación
+  				width="20px"
+  				height="35px"
+  				icono={<Icon icon="mdi:add-bold" />}
+  			  ></Btn1>
+              
+              <span className="cantidad">{item._cantidad}</span>
+              {/* (Quitamos el icono de lápiz, ahora se edita con clic) */}
+
+  			  <Btn1
+  				funcion={(e) => { e.stopPropagation(); restarcantidadItem(item); }} // Detener la propagación
+  				width="20px"
+  				height="35px"
+  				icono={<Icon icon="subway:subtraction-1" />}
+  			  ></Btn1>
+  			</article>
+  			<article className="contentTotaldetalleventa">
+  			  <span className="cantidad">
+  				<strong>
+  				  {FormatearNumeroDinero(
+  					totalItem, // <-- USAMOS EL TOTAL CALCULADO
+  					dataempresa?.currency,
+  					dataempresa?.iso
+  				  )}
+  				</strong>
+  			  </span>
+  			  <span className="delete" onClick={(e) => { e.stopPropagation(); removeItem(item); }}> 
+  				<Icon icon="weui:delete-filled" width="24" height="24" />
+  			  </span>
+  			</article>
+  		  </Itemventa>
+  		);
+  	  })
+  	) : (
+  	  <Lottieanimacion animacion={animacionvacio} alto="200" ancho="200" />
+  	)}
   </AreaDetalleventa>
+
+    {/* ¡EL MODAL YA NO SE RENDERIZA AQUÍ! */}
+  </> 
   );
 }
-// (ContentTotalResponsive, AreaDetalleventa, Itemventa)
-const ContentTotalResponsive = styled.div`
-  display: flex;
-  flex-direction: flex;
-  gap: 8px;
-  width: 100%;
-  justify-content: space-between;
-  .descripcionrespon {
-    font-weight: 700;
-    font-size: 20px;
-  }
-  .importerespo {
-    font-size: 15px;
-    display: flex;
-    width: 100%;
-  }
-  @media ${Device.laptop} {
-    display: none;
-  }
-  .contentTotaldetalleventarespon {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: end;
-    text-align: end;
-    align-items: center;
-gap:8px;
-    width: 100%;
-    .delete {
-      cursor: pointer;
-      width: 20px;
-      align-self: center;
-    }
-  }
-`;
 const AreaDetalleventa = styled.section`
   display: flex;
   width: 100%;
@@ -245,6 +151,10 @@ const Itemventa = styled.section`
         display: block;
       }
     }
+      cursor: pointer;
+  &:hover {
+    background-color: ${({ theme }) => theme.bgAlpha}; // (Opcional: efecto hover)
+  }
   }
   .contentbtn {
     display: flex;

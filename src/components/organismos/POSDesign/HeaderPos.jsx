@@ -79,16 +79,25 @@ export function HeaderPos() {
          return;
       }
 
+      // ¡OBJETO ACTUALIZADO!
       const productoParaCarrito = {
         _id_producto: producto.id,
         nombre: producto.nombre,
         _precio_venta: producto.precio_venta,
         _precio_compra: producto.precio_compra,
         _cantidad: cantidad,
-        _id_almacen: almacenUnico.id_almacen, // ID del almacén único
+        _id_almacen: almacenUnico.id_almacen,
         nombre_almacen: almacenUnico.almacen.nombre,
         _id_sucursal: dataCierreCaja?.caja?.id_sucursal,
-        _total: cantidad * producto.precio_venta,
+        // (Campos nuevos por defecto)
+        id: Date.now(),
+        precio_modificado: null,
+        nombre_modificado: null,
+        descuento: 0,
+        descuento_es_porcentaje: false,
+        detalle: "",
+        _total: cantidad * producto.precio_venta, // Este es el subtotal base
+        _stock_maximo: almacenUnico.stock,
       };
 
       addItem(productoParaCarrito); // ¡Añadido al carrito local!

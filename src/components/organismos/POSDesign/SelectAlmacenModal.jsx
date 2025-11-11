@@ -52,6 +52,7 @@ export const SelectAlmacenModal = () => {
     setAlmacenSelectItem(almacenSeleccionado);
 
     // 2. Construir el producto para el carrito
+    // ¡OBJETO ACTUALIZADO!
     const productoParaCarrito = {
       _id_producto: productosItemSelect.id,
       nombre: productosItemSelect.nombre,
@@ -61,7 +62,15 @@ export const SelectAlmacenModal = () => {
       _id_almacen: almacenSeleccionado?.id_almacen,
       nombre_almacen: almacenSeleccionado?.almacen.nombre,
       _id_sucursal: sucursalesItemSelectAsignadas.id_sucursal,
-      _total: (parseFloat(cantidadInput) || 1) * productosItemSelect.precio_venta
+      // (Campos nuevos por defecto)
+      id: Date.now(),
+      precio_modificado: null,
+      nombre_modificado: null,
+      descuento: 0,
+      descuento_es_porcentaje: false,
+      detalle: "",
+      _total: (parseFloat(cantidadInput) || 1) * productosItemSelect.precio_venta,
+      _stock_maximo: almacenSeleccionado.stock,
     };
     
     // 3. Añadir al carrito local

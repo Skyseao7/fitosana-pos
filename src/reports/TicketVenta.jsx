@@ -324,13 +324,8 @@ const TicketVenta = async (output, data) => {
           margin: [0, 10, 0, 3],
         },
         {
-          text: "Representación impresa del comprobante original. Consulta tu comprobante aquí:",
+          text: "Representación impresa del comprobante original. Consulta tu comprobante aquí.",
           style: "text",
-        },
-        {
-          text: "https://codigo369web.com/",
-          link: "https://codigo369web.com/",
-          style: "link",
         },
       ],
     },

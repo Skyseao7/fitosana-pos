@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { Device } from "../../styles/breakpoints";
 import { blur_in } from "../../styles/keyframes";
-import { v } from "../../styles/variables";
+// import { v } from "../../styles/variables"; // No se usa
 import { PantallaCierreCaja } from "../organismos/POSDesign/CajaDesign/PantallaCierreCaja";
 import {
   AreaDetalleventaPos,
@@ -25,9 +25,9 @@ import { useMostrarSerializacionesVentasQuery } from "../../tanstack/Serializaci
 import { useMostrasrImpresorasPorCajaQuery } from "../../tanstack/ImpresorasStack";
 
 // --- ¡IMPORTACIONES NUEVAS! ---
-import { useEffect } from "react";
+import { useState, useEffect } from "react"; // <-- ¡Añade useEffect aquí!
 import { useCartVentasStoreTemporal } from "../../store/CartVentasStoreTemporal";
-
+import { EditarItemModal } from "../organismos/POSDesign/EditarItemModal";
 
 export function POSTemplate() {
   // --- ¡ESCUCHANDO AL STORE CORRECTO! ---
@@ -35,6 +35,7 @@ export function POSTemplate() {
   
   const { stateIngresoSalida, stateCierreCaja } = useCierreCajaStore();
   const { stateModal } = useStockStore();
+  const [itemEditar, setItemEditar] = useState(null);
   
   // --- ¡LLAMADA AL 'RESET' EN LA CARGA! ---
   useEffect(() => {
@@ -51,10 +52,17 @@ export function POSTemplate() {
 
   return (
   	<Container>
+      {/* --- MODALES GLOBALES (Ahora el de Editar vive aquí) --- */}
   	  {stateModal && <SelectAlmacenModal />}
       {stateIngresoSalida && <PantallaIngresoSalidaDinero />}
   	  {stateCierreCaja && <PantallaCierreCaja />}
-
+      {itemEditar && (
+        <EditarItemModal 
+          item={itemEditar} 
+          onClose={() => setItemEditar(null)} 
+        />
+      )}
+  	  {/* --- LÓGICA DE VISTA PRINCIPAL --- */}
   	  {statePantallaCobro ? (
         <PantallaCobro />
       ) : (
@@ -62,7 +70,8 @@ export function POSTemplate() {
           <HeaderPos />
       	  <Main>
       		<Toaster position="top-center" />
-      		<AreaDetalleventaPos />
+            {/* ¡Le pasamos la función para que nos "avise"! */}
+      		<AreaDetalleventaPos onEditItem={setItemEditar} />
       		<AreaTecladoPos />
       	  </Main>
       	  <FooterPos />
