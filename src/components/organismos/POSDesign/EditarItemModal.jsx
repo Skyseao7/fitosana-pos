@@ -67,7 +67,7 @@ const handleGuardar = () => {
           <Row>
             <Col>
               <FormGroup>
-                <StyledLabel>Precio Unitario</StyledLabel>
+                <StyledLabel>Precio</StyledLabel>
                 <StyledInput type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} />
               </FormGroup> 
             </Col>
