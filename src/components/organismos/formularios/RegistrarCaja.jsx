@@ -97,7 +97,7 @@ export function RegistrarCaja() {
                       required: true,
                     })}
                   />
-                  <label className="form__label">caja</label>
+                  <label className="form__label">Caja</label>
                   {errors.descripcion?.type === "required" && (
                     <p>Campo requerido</p>
                   )}
@@ -107,7 +107,7 @@ export function RegistrarCaja() {
               <Btn1
                 icono={<v.iconoguardar />}
                 titulo="Guardar"
-                bgcolor="#F9D70B"
+                bgcolor="#1d8850"
               />
             </section>
           </form>

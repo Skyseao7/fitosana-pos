@@ -29,7 +29,7 @@ export const SucursalesCajasTemplate = () => {
     
       <section className="area1">
         <Header>
-          <Title>Sucursales</Title>
+          <Title>SUCURSALES</Title>
           <Subtitle>Gstiona tus sucursales y cajas.</Subtitle>
           <ButtonDashed title="Agregar Sucursal" funcion={handleNuevoClick}/>
         </Header>

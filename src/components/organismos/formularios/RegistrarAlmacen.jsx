@@ -51,7 +51,7 @@ export function RegistrarAlmacen() {
       toast.error(`Error: ${error.message}`);
     },
     onSuccess: () => {
-      toast.success("Almacen registrado correctamente");
+      toast.success("Almacen registrado correctamente.");
       queryClient.invalidateQueries(["mostrar almacenes X empresa"]);
       setStateAlmacen(false);
     },
@@ -96,7 +96,7 @@ export function RegistrarAlmacen() {
                       required: true,
                     })}
                   />
-                  <label className="form__label">almacen</label>
+                  <label className="form__label">Almacen</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -104,7 +104,7 @@ export function RegistrarAlmacen() {
               <Btn1
                 icono={<v.iconoguardar />}
                 titulo="Guardar"
-                bgcolor="#F9D70B"
+                bgcolor="#1d8850"
               />
             </section>
           </form>

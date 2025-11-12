@@ -22,8 +22,8 @@ export const AlmacenesTemplate = () => {
 
       <section className="area1">
         <Header>
-          <Title>Almacenes por sucursal</Title>
-          <Subtitle>gestiona tus almacenes por sucursal</Subtitle>
+          <Title>ALMACENES</Title>
+          <Subtitle>Gestiona tus almacenes por sucursal.</Subtitle>
          
         </Header>
       </section>
