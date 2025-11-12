@@ -95,7 +95,7 @@ export function RegistrarSucursal() {
                       required: true,
                     })}
                   />
-                  <label className="form__label">sucursal</label>
+                  <label className="form__label">Sucursal</label>
                   {errors.nombre?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -112,7 +112,7 @@ export function RegistrarSucursal() {
                     placeholder="direccion fiscal"
                     {...register("direccion_fiscal")}
                   />
-                  <label className="form__label">direccion fiscal</label>
+                  <label className="form__label">RUC</label>
                   
                 </InputText>
               </article>
@@ -120,7 +120,7 @@ export function RegistrarSucursal() {
               <Btn1
                 icono={<v.iconoguardar />}
                 titulo="Guardar"
-                bgcolor="#F9D70B"
+                bgcolor="#1d8850"
               />
             </section>
           </form>

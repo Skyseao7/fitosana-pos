@@ -8,8 +8,14 @@ import { useCajasStore } from "../../store/CajasStore";
 import {RegistrarCaja} from "../organismos/formularios/RegistrarCaja"
 import {AnimatedGrid} from "../ui/animated/AnimatedGrid"
 export const SucursalesCajasTemplate = () => {
-  const {stateSucursal,setStateSucursal} = useSucursalesStore()
+  const {stateSucursal, setStateSucursal, setAccion, selectSucursal} = useSucursalesStore()
   const {stateCaja} = useCajasStore()
+
+  const handleNuevoClick = () => {
+    setAccion("Nuevo");       // 1. Pone el modal en modo "Nuevo"
+    selectSucursal(null);     // 2. Limpia la sucursal seleccionada (¡MUY IMPORTANTE!)
+    setStateSucursal(true); // 3. Abre el modal
+  };
 
   return (
     <Container>
@@ -23,9 +29,9 @@ export const SucursalesCajasTemplate = () => {
     
       <section className="area1">
         <Header>
-          <Title>Cajas por sucursal</Title>
-          <Subtitle>gestiona tus sucursales y cajas</Subtitle>
-          <ButtonDashed title="agregar sucursal" funcion={()=>setStateSucursal(true)}/>
+          <Title>Sucursales</Title>
+          <Subtitle>Gstiona tus sucursales y cajas.</Subtitle>
+          <ButtonDashed title="Agregar Sucursal" funcion={handleNuevoClick}/>
         </Header>
       </section>
       <section className="area2">
