@@ -1,87 +1,95 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEmpresaStore } from "../store/EmpresaStore";
-import { useSucursalesStore } from "../store/SucursalesStore";
-import { useImpresorasStore } from "../store/ImpresorasStore";
+// En: src/tanstack/MovStockStack.jsx
+// ¡CÓDIGO CORREGIDO!
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useAsignacionCajaSucursalStore } from "../store/AsignacionCajaSucursalStore";
-import { useUsuariosStore } from "../store/UsuariosStore";
+// (Importa todos tus stores)
 import { useProductosStore } from "../store/ProductosStore";
-import { ConvertirMinusculas } from "../utils/Conversiones";
-import { useCategoriasStore } from "../store/CategoriasStore";
 import { useMovStockStore } from "../store/MovStockStore";
 import { useAlmacenesStore } from "../store/AlmacenesStore";
 import { useFormattedDate } from "../hooks/useFormattedDate";
-import { useStockStore } from "../store/StockStore";
+import { useStockStore } from "../store/StockStore"; 
 import { useGlobalStore } from "../store/GlobalStore";
 
-// export const useBuscarProductosQuery = () => {
-//   const { buscador, buscarProductos } = useProductosStore();
-//   const { dataempresa } = useEmpresaStore();
-
-//   return useQuery({
-//     queryKey: ["buscar productos", buscador],
-//     queryFn: () =>
-//       buscarProductos({
-//         id_empresa: dataempresa?.id,
-//         buscador: buscador,
-//       }),
-//     enabled: !!dataempresa,
-//   });
-// };
 export const useInsertarMovStockMutation = () => {
-  const queryClient = useQueryClient();
-  const {  productosItemSelect,resetProductosItemSelect } = useProductosStore();
- const { itemSelect ,setStateClose} = useGlobalStore();
-  const { tipo, insertarMovStock } = useMovStockStore();
-  const {  editarStock,dataStockXAlmacenYProducto:dataStock } = useStockStore();
-  const { almacenSelectItem } =
-    useAlmacenesStore();
-   
-  const { editarPreciosProductos } = useProductosStore();
-  const fechaActual = useFormattedDate();
-  console.log("dataStock",dataStock)
-  return useMutation({
-    mutationKey: ["insertar movimiento stock"],
-    mutationFn: async (data) => {
-      const pMovimientoStock = {
-        id_almacen: almacenSelectItem?.id,
-        id_producto: productosItemSelect?.id,
-        tipo_movimiento: tipo,
-        cantidad: parseFloat(data.cantidad),
-        fecha: fechaActual,
-        detalle: "registro de inventario manual",
-        origen: "inventario",
-      };
-      const pStock = {
-        _id: dataStock?.id,
-        cantidad: parseFloat(data.cantidad),
-      };
-      const pProductos = {
-        id: productosItemSelect?.id,
-        precio_compra: parseFloat(
-          (productosItemSelect?.precio_compra + data.precio_compra) / 2
-        ),
-        precio_venta: parseFloat(
-          (productosItemSelect?.precio_venta + data.precio_venta) / 2
-        ),
-      };
-      console.log("pMovimientoStock",pMovimientoStock)
-      console.log("pStock",pStock)
-      console.log("pProductos",pProductos)
-      console.log("tipo",tipo)
+  const queryClient = useQueryClient();
+  const {  productosItemSelect, resetProductosItemSelect } = useProductosStore();
+  const { setStateClose } = useGlobalStore();
+  
+  // --- ¡CAMBIO 1! ---
+  // Ya no leemos 'tipo' aquí. Solo traemos las funciones.
+  const { insertarMovStock } = useMovStockStore();
+  const {  editarStock } = useStockStore();
+  const { almacenSelectItem } = useAlmacenesStore();
+  const { editarPreciosProductos } = useProductosStore();
+  const fechaActual = useFormattedDate();
+
+  return useMutation({
+  	mutationKey: ["insertar movimiento stock"],
+  	mutationFn: async (data) => {
       
-      await insertarMovStock(pMovimientoStock);
-       await editarStock(pStock, tipo);
-       await editarPreciosProductos(pProductos);
-    },
-    onError: (error) => {
-      toast.error("Error:" + error.message);
-    },
-    onSuccess: () => {
-      toast.success("Registro guardado correctamente");
-      queryClient.invalidateQueries(["buscar productos"]);
-      setStateClose(false)
-      resetProductosItemSelect()
-    },
-  });
+      // --- ¡CAMBIO 2! ---
+      // Obtenemos el 'tipo' FRESCO desde el store en el momento del clic.
+      const tipoFresco = useMovStockStore.getState().tipo;
+      
+  	  const dataStockActual = useStockStore.getState().dataStockXAlmacenYProducto;
+
+  	  if (!dataStockActual || !dataStockActual.id) {
+  		throw new Error("No se pudo obtener la ID del stock. Vuelva a seleccionar el producto y almacén.");
+  	  }
+  	  
+      // Validamos el stock si es una SALIDA
+  	  if (tipoFresco === "salida" && dataStockActual.stock < parseFloat(data.cantidad)) {
+  		throw new Error(`Stock insuficiente. Solo hay ${dataStockActual.stock} unidades.`);
+  	  }
+
+  	  const pMovimientoStock = {
+  		id_almacen: almacenSelectItem?.id,
+  		id_producto: productosItemSelect?.id,
+        // --- ¡CAMBIO 3! ---
+  		tipo_movimiento: tipoFresco, // <-- Usamos el valor fresco
+  		cantidad: parseFloat(data.cantidad),
+  		fecha: fechaActual,
+  		detalle: "registro de inventario manual",
+  		origen: "inventario",
+  	  };
+
+  	  const pStock = {
+  		_id: dataStockActual.id, 
+  		cantidad: parseFloat(data.cantidad),
+  	  };
+
+  	  const pProductos = {
+  		id: productosItemSelect?.id,
+  		precio_compra: parseFloat(
+  		  (productosItemSelect?.precio_compra + data.precio_compra) / 2
+  		),
+  		precio_venta: parseFloat(
+  		  (productosItemSelect?.precio_venta + data.precio_venta) / 2
+  		),
+  	  };
+  	  
+  	  // 1. Primero, editamos el stock (la operación riesgosa)
+      // --- ¡CAMBIO 4! ---
+  	  await editarStock(pStock, tipoFresco); // <-- Usamos el valor fresco
+      // 2. Si eso funciona, registramos el movimiento
+  	  await insertarMovStock(pMovimientoStock);
+      // 3. Finalmente, actualizamos precios (si es ingreso)
+  	  if (tipoFresco === "ingreso") {
+  		await editarPreciosProductos(pProductos);
+  	  }
+  	},
+  	onError: (error) => {
+  	  toast.error("Error: " + error.message);
+  	},
+  	onSuccess: () => {
+  	  toast.success("Registro guardado correctamente");
+  	  queryClient.invalidateQueries(["buscar productos"]);
+  	  queryClient.invalidateQueries(["mostrar Stock XAlmacenes YProducto"]);
+  	  queryClient.invalidateQueries(["mostrar stock xalmacenyproducto"]); 
+  	  queryClient.invalidateQueries(["mostrar movstock"]); 
+  	  setStateClose(false);
+  	  resetProductosItemSelect();
+  	},
+  });
 };

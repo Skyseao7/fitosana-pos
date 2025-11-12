@@ -19,7 +19,7 @@ import { useStockStore } from "../../store/StockStore";
 // (tus imports de tanstack...)
 import { useBuscarProductosQuery } from "../../tanstack/ProductosStack";
 import { useMostrarAlmacenesXSucursalQuery } from "../../tanstack/AlmacenesStack";
-import { useMostrarStockXAlmacenesYProductoQuery } from "../../tanstack/StockStack";
+//import { useMostrarStockXAlmacenesYProductoQuery } from "../../tanstack/StockStack";
 import { useMostrarMetodosPagoQuery } from "../../tanstack/MetodosPagoStack";
 import { useMostrarSerializacionesVentasQuery } from "../../tanstack/SerializacionStack";
 import { useMostrasrImpresorasPorCajaQuery } from "../../tanstack/ImpresorasStack";
@@ -45,7 +45,7 @@ export function POSTemplate() {
   // (Toda tu lógica de useQuery... se queda igual)
   useBuscarProductosQuery();
   useMostrarAlmacenesXSucursalQuery();
-  useMostrarStockXAlmacenesYProductoQuery();
+  //useMostrarStockXAlmacenesYProductoQuery();
   useMostrarMetodosPagoQuery();
   useMostrarSerializacionesVentasQuery();
   useMostrasrImpresorasPorCajaQuery();

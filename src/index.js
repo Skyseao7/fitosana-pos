@@ -106,3 +106,8 @@ export * from './components/organismos/DashboardDesign/DashboardHeader.jsx';
 export * from './pages/HistorialVentas.jsx';
 export * from './store/DashboardStore.jsx';
 export * from './components/organismos/DetalleVentaModal.jsx';
+export * from './components/organismos/formularios/RegistrarInventario.jsx';
+export * from './components/organismos/TransferenciaStockModal.jsx';
+export * from './components/organismos/tablas/TablaInventarios.jsx';
+export * from './components/organismos/TransferenciaStockModal.jsx';
+export * from './tanstack/StockStack.jsx';

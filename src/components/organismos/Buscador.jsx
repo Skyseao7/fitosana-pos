@@ -16,7 +16,7 @@ export function Buscador({ setBuscador }) {
 }
 const Container = styled.div`
   border-radius: 10px;
-  height: 60px;
+  height: 40px;
   align-items: center;
   display: flex;
   color: ${(props) => props.theme.text};

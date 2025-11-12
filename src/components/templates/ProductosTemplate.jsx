@@ -139,6 +139,7 @@ export function ProductosTemplate() {
           color="#fff"
           titulo="NUEVO"
           icono={<v.iconoagregar />}
+          height={"50px"}
         />
       </section>
 
@@ -157,12 +158,13 @@ export function ProductosTemplate() {
 const Container = styled.div`
   height: calc(100vh - 80px);
   
-  margin-top:50px;
+  margin-top:5px;
+  margin-bottom:20px;
   padding: 15px;
   display: grid;
   grid-template:
     "area1" 60px
-    "area2" 60px  // Espacio para los buscadores
+    "area2" 30px  // Espacio para los buscadores
     "main" auto;
     gap: 15px; // Espacio entre áreas
   .area1 {
@@ -183,7 +185,7 @@ const Container = styled.div`
     
     & > :first-child { // Selecciona al primer hijo (el Buscador)
       flex-grow: 1; // Permite que crezca y ocupe el espacio extra
-      max-width: 450px; // Ponle un límite de ancho (ajusta este valor)
+      max-width: 500px; // Ponle un límite de ancho (ajusta este valor)
     }
   }
   }
