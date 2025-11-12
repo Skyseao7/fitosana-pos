@@ -139,7 +139,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                       required: true,
                     })}
                   />
-                  <label className="form__label">email</label>
+                  <label className="form__label">Usuario</label>
                   {errors.email?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -163,7 +163,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                       required: true,
                     })}
                   />
-                  <label className="form__label">contraseña</label>
+                  <label className="form__label">Contraseña</label>
                   {errors.pass?.type === "required" && <p>Campo requerido</p>}
                 </InputText>
               </article>
@@ -228,7 +228,6 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                   )}
                 </InputText>
               </article>
-              <span>Asignación de sucursal</span>
               <article className="contentasignacion">
                 <span>Sucursal:</span>
                 <SelectList
@@ -238,13 +237,14 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
                   data={dataSucursales}
                 />
               </article>
-
-              <Btn1 titulo={"Guardar"} bgcolor={"#2c2ca8"} color={"#fff"} />
             </section>
             <section className="area2">
               <PermisosUser />
             </section>
           </section>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Btn1 titulo={"Guardar"} bgcolor={"#1d8850"} color={"#fff"} width={"20%"} />
+          </div>
         </Form>
       )}
     </Container>
@@ -272,7 +272,6 @@ const Form = styled.form`
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
 
   .main {
     display: flex;
@@ -295,6 +294,7 @@ const Form = styled.form`
       flex-direction: column;
       height: 100%;
       align-items: center;
+      border: 2px bold ${({ theme }) => theme.textSoft};
     }
   }
 `;
@@ -306,6 +306,6 @@ const Header = styled.div`
   justify-content: center;
 `;
 const Title = styled.span`
-  font-size: 30px;
+  font-size: 25px;
   font-weight: bold;
 `;

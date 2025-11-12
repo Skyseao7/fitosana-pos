@@ -49,7 +49,7 @@ import { MdDelete } from "react-icons/md";
 
 export const v = {
   iconobuscar:FaSearch,
-  colorPrincipal: `#F3D20C`,
+  colorPrincipal: `#1d8850`,
   colorSecundario: `#DAC1FF`,
   iconoagregar: GrAdd,
   iconoimagenvacia: FcImageFile,

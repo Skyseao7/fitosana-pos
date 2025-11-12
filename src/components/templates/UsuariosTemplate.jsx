@@ -45,7 +45,7 @@ export function UsuariosTemplate() {
         <Btn1
           funcion={nuevoRegistro}
           bgcolor={v.colorPrincipal}
-          titulo="nuevo"
+          titulo="Nuevo"
           icono={<v.iconoagregar />}
         />
       </section>

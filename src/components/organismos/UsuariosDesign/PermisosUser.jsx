@@ -73,9 +73,9 @@ export const PermisosUser = () => {
     isLoadingPermisosDefault ||
     isLoadingPermisosUser;
   if (isLoading) return <BarLoader />;
+  
   return (
     <Container>
-      <Title>permisos</Title>
       <label>Tipo: </label>
       <SelectList
         data={dataroles}
@@ -104,27 +104,49 @@ export const PermisosUser = () => {
     </Container>
   );
 };
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: 80%;
   padding: 1.5rem;
 `;
 const Title = styled.span`
   font-size: 1.5rem;
   text-align: center;
 `;
+
 const List = styled.ul`
   list-style: none;
   padding: 0;
+  margin-top: 1.5rem; /* Añadido para separar del dropdown */
+
+  display: grid; /* 1. Activa CSS Grid */
+  gap: 10px; /* 2. Define el espacio entre los items */
+
+  /* 3. Define las columnas */
+  /* Por defecto, 1 columna en móviles */
+  grid-template-columns: 1fr;
+
+  /* A partir de 768px (tablets), usa 3 columnas */
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Opcional: si quieres 3 columnas siempre, 
+     borra el @media y deja solo:
+     grid-template-columns: repeat(3, 1fr);
+  */
 `;
+
 const ListItem = styled.li`
   display: flex;
   align-items: center;
-  padding: 0.5rem 0;
+  /* El padding se maneja mejor con el 'gap' de la grilla */
+  /* padding: 0.5rem 0; */
 `;
 const Label = styled.span`
   font-size: 1rem;
   color: #555;
-  margin-left: 15px;
+  margin-left: 15px; /* Reducido un poco para mejor ajuste */
 `;
