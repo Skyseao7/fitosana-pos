@@ -16,58 +16,38 @@ import {
 import { FaArrowsAltV } from "react-icons/fa";
 
 // Aceptamos 'data' como prop, y la renombramos a 'dataProp'
-export function TablaInventarios({ data: dataProp, datacategorias }) {
+export function TablaInventarios({ data: dataProp, onRowClick }) {
   const [pagina, setPagina] = useState(1);
   const [columnFilters, setColumnFilters] = useState([]);
   const { dataempresa } = useEmpresaStore();
-  // Crea un Mapa para buscar nombres de marca por ID
-const marcaLookup = useMemo(() => {
-  const map = new Map();
-  if (datacategorias) {
-    for (const cat of datacategorias) {
-      map.set(cat.id, cat.nombre);
-    }
-  }
-  return map;
-}, [datacategorias]);
   const data = useMemo(() => dataProp ?? [], [dataProp]);
   
-  // (Y corregimos los nombres de 'almacenes' a 'almacen')
   const columns = [
   	{
-  	  accessorKey: "productos.nombre",
+  	  accessorKey: "nombre_producto", 
   	  header: "Nombre",
   	  cell: (info) => <span>{info.getValue()}</span>,
   	},
     { 
-      // 1. Obtenemos el ID de la categoría desde el producto
-      accessorKey: "productos.id_categoria", 
+     accessorKey: "marca", 
       header: "Marca",
-      // 2. Usamos el ID para buscar el nombre en nuestro mapa
-      cell: (info) => {
-        const marcaId = info.getValue(); // Esto es el ID (ej: 5)
-        const marcaNombre = marcaLookup.get(marcaId); // Busca el nombre (ej: "Fitosana")
-        return <span>{marcaNombre || 'Sin Marca'}</span>; // Muestra el nombre
-      },
+      cell: (info) => <span>{info.getValue() || 'Sin Marca'}</span>,
       enableColumnFilter: true,
     },
     {
-  	  accessorKey: "almacen.sucursales.nombre", // <-- CORREGIDO
-  	  header: "Sucursal",
-  	  cell: (info) => <span>{info.getValue()}</span>,
-  	},
-    {
-  	  accessorKey: "stock",
+  	  accessorKey: "stock_total",
   	  header: "Stock Total",
   	  cell: (info) => <strong>{info.getValue()}</strong>,
   	},
     {
-  	  accessorKey: "productos.precio_venta",
+      // El accesor ahora es 'precio_venta'
+  	  accessorKey: "precio_venta",
   	  header: "Precio",
   	  cell: (info) => <span>{FormatearNumeroDinero(info.getValue(), dataempresa?.currency, dataempresa?.iso)}</span>,
   	},
     {
-  	  accessorKey: "productos.p_compra", // Tu C/U
+      // El accesor ahora es 'costo_unidad' (o 'p_compra' si así lo dejaste en el SQL)
+  	  accessorKey: "costo_unidad", 
   	  header: "C/U",
   	  cell: (info) => <span>{FormatearNumeroDinero(info.getValue(), dataempresa?.currency, dataempresa?.iso)}</span>,
   	},
@@ -112,14 +92,19 @@ const marcaLookup = useMemo(() => {
           	))}
         	</thead>
         	<tbody>
-        	  {table.getRowModel().rows.map((item) => (
-        		<tr key={item.id}>
-        		  {item.getVisibleCells().map((cell) => (
-        			<td key={cell.id}>
-        			  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        			</td>
-      	  		  ))}
-    	  		</tr>
+    	    {table.getRowModel().rows.map((item) => (
+            // --- ¡AÑADIDO onRowClick! ---
+    	  	  <tr 
+              key={item.id} 
+              onClick={() => onRowClick(item.original)} 
+              style={{ cursor: 'pointer' }}
+            >
+    	  		  {item.getVisibleCells().map((cell) => (
+    	  		    <td key={cell.id}>
+    	  		      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    	  		    </td>
+    	  	  	  ))}
+    	  	    </tr>
     	  	  ))}
   	  	  </tbody>
     	  </table>

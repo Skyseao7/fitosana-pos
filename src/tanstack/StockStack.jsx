@@ -1,3 +1,4 @@
+import { supabase } from "../supabase/supabase.config";
 import { useQuery } from "@tanstack/react-query";
 import { 
   MostrarStockActual, 
@@ -32,4 +33,40 @@ export const useMostrarStockXAlmacenYProductoQuery = (id_almacen, id_producto) =
     // Se ejecutará solo si ambos IDs existen
     enabled: !!id_almacen && !!id_producto, 
   });
+};
+
+// --- PEGA ESTO AL FINAL DE src/tanstack/StockStack.jsx ---
+
+// Hook para la vista principal (Resumen de Inventario)
+export const useMostrarInventarioTotalQuery = (id_empresa) => {
+  return useQuery({
+    queryKey: ['mostrarInventarioTotal', id_empresa],
+    queryFn: async () => {
+      // 1. Llama a la función SQL que creamos
+      const { data, error } = await supabase.rpc('mostrar_inventario_total', {
+        _id_empresa: id_empresa
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    // Solo se ejecuta si id_empresa tiene un valor
+    enabled: !!id_empresa, 
+  });
+};
+
+// Hook para el modal (Detalle de Stock por producto)
+export const useMostrarStockDesglosadoQuery = (id_producto) => {
+  return useQuery({
+    queryKey: ['mostrarStockDesglosado', id_producto],
+    queryFn: async () => {
+      // 2. Llama a la otra función SQL que creamos
+      const { data, error } = await supabase.rpc('mostrar_stock_desglosado', {
+        _id_producto: id_producto
+      });
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    // Solo se ejecuta si id_producto tiene un valor
+    enabled: !!id_producto,
+  });
 };

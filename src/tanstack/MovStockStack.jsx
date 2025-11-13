@@ -1,6 +1,3 @@
-// En: src/tanstack/MovStockStack.jsx
-// ¡CÓDIGO CORREGIDO!
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 // (Importa todos tus stores)

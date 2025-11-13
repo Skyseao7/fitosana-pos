@@ -111,3 +111,4 @@ export * from './components/organismos/TransferenciaStockModal.jsx';
 export * from './components/organismos/tablas/TablaInventarios.jsx';
 export * from './components/organismos/TransferenciaStockModal.jsx';
 export * from './tanstack/StockStack.jsx';
+export * from './components/organismos/DetalleStockModal.jsx';

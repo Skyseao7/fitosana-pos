@@ -1,60 +1,49 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import styled from "styled-components";
 import { 
-  RegistrarInventario,
   TablaInventarios,
-  Btn1,
-  TransferenciaStockModal,
   Title,
   Buscador, 
   useEmpresaStore, 
-  useMostrarStockActualQuery,
   Select, // Importamos el componente Select
-  useCategoriasStore // Importamos el store de categorías/marcas
+  useCategoriasStore, // Importamos el store de categorías/marcas
+  DetalleStockModal
 } from "../index"; 
 import { Icon } from '@iconify/react';
 import { useGlobalStore } from "../store/GlobalStore";
 import { v } from "../styles/variables"; 
-
+import { useMostrarInventarioTotalQuery } from "../tanstack/StockStack";
 export function Inventario() {
-  const { setStateClose, stateClose } = useGlobalStore();
-  const [tipoMovimiento, setTipoMovimiento] = useState("ingreso");
-  const [modalTransfer, setModalTransfer] = useState(false);
-  
+  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   // --- LÓGICA DE DATOS Y FILTRADO (COPIADA DE PRODUCTOS) ---
   const [textoBusqueda, setTextoBusqueda] = useState(""); 
   const [filtroMarca, setFiltroMarca] = useState(null);
   const { dataempresa } = useEmpresaStore();
   const { datacategorias } = useCategoriasStore(); // Para el filtro
+
+  // Usa la nueva función que creamos para el RESUMEN de stock total
   const { data: dataStockOriginal, isLoading, isError, error, isFetching } = 
-    useMostrarStockActualQuery(dataempresa?.id);
+    useMostrarInventarioTotalQuery(dataempresa?.id); // CAMBIADO
 
-  // Funciones de modales (sin cambios)
-  const openModal = (tipo) => {
-    setTipoMovimiento(tipo); 
-    setStateClose(true);     
-  };
-  const openModalTransfer = () => {
-    setModalTransfer(true);
+  const handleVerDetalle = (producto) => {
+  setProductoSeleccionado(producto);
+  setModalDetalleAbierto(true);
   };
 
-  // --- FILTRADO CLIENT-SIDE (COPIADO DE PRODUCTOS) ---
-  // Esto arreglará tu bug de "buscador no funciona"
   const dataStockFiltrada = useMemo(() => {
     let stock = dataStockOriginal ?? []; 
     
-    // 1. Filtro por Marca
     if (filtroMarca?.id) {
-      stock = stock.filter(item => item.productos?.id_categoria === filtroMarca.id);
+      // Asumiendo que tu nueva función devuelve 'id_categoria'
+      stock = stock.filter(item => item.id_categoria === filtroMarca.id);
     }
     
-    // 2. Filtro por Texto de Búsqueda
     if (textoBusqueda) {
       const lowerTexto = textoBusqueda.toLowerCase();
       stock = stock.filter(item => 
-        item.productos?.nombre.toLowerCase().includes(lowerTexto) ||
-        item.almacen?.nombre.toLowerCase().includes(lowerTexto) || 
-        item.almacen?.sucursales?.nombre.toLowerCase().includes(lowerTexto)
+        item.nombre_producto.toLowerCase().includes(lowerTexto)
+        // Ya no podemos filtrar por almacén/sucursal aquí
       );
     }
     return stock;
@@ -62,16 +51,11 @@ export function Inventario() {
  
   return (
   	<Container>
-      {/* --- MODALES --- */}
-      {stateClose && (
-        <RegistrarInventario 
-          tipo={tipoMovimiento} 
-          onClose={() => setStateClose(false)} 
-        />
-      )}
-      {modalTransfer && (
-        <TransferenciaStockModal 
-          onClose={() => setModalTransfer(false)} 
+      {/* --- MODAL --- */}
+      {modalDetalleAbierto && (
+        <DetalleStockModal 
+          producto={productoSeleccionado}
+          onClose={() => setModalDetalleAbierto(false)} 
         />
       )}
 
@@ -84,10 +68,9 @@ export function Inventario() {
       {/* --- ACCIONES (area2) --- */}
       <section className="area2">
         <Buscador
-          placeholder="Buscar producto, almacén o sucursal..."
+          placeholder="Buscar producto..."
           setBuscador={setTextoBusqueda}
         />
-        {/* ¡Filtro de Marca igual que en Productos! */}
         <SelectMarcaContainer>
           <Select
             options={datacategorias || []}
@@ -100,34 +83,6 @@ export function Inventario() {
             isSearchable
           />
         </SelectMarcaContainer>
-        
-        {/* ¡Botones agrupados! */}
-        <ContenedorBotones> 
-          <Btn1 
-            titulo="Ingreso" 
-            icono={<v.iconoagregar />} 
-            bgcolor="#198754" 
-            color="#fff"
-            funcion={() => openModal("ingreso")}
-            height="50px" 
-          />
-          <Btn1 
-            titulo="Salida" 
-            icono={<Icon icon="fa6-solid:minus" />} 
-            bgcolor="#dc3545" 
-            color="#fff"
-            funcion={() => openModal("salida")}
-            height="50px"
-          />
-          <Btn1 
-            titulo="Transferencia" 
-            icono={<Icon icon="fa6-solid:right-left" />} 
-            bgcolor="#0d6efd" 
-            color="#fff"
-            funcion={openModalTransfer}
-            height="50px"
-          />
-        </ContenedorBotones>
       </section>
 
       {/* --- TABLA (main) --- */}
@@ -138,6 +93,7 @@ export function Inventario() {
           <TablaInventarios 
             data={dataStockFiltrada} 
             datacategorias={datacategorias || []}
+            onRowClick={handleVerDetalle}
           />
         )}
   	  </section>
