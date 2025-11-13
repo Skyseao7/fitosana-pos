@@ -6,10 +6,8 @@ import { Check } from "../../ui/toggles/Check";
 import { useRolesStore } from "../../../store/RolesStore";
 import { usePermisosStore } from "../../../store/PermisosStore";
 import { useEffect } from "react";
-import { useAsignacionCajaSucursalStore } from "../../../store/AsignacionCajaSucursalStore";
 import { BarLoader } from "react-spinners";
-import { useUsuariosStore } from "../../../store/UsuariosStore";
-export const PermisosUser = () => {
+export const PermisosUser = ({ accion, dataSelect }) => {
   const {
     mostrarPermisos,
     toggleModule,
@@ -19,59 +17,77 @@ export const PermisosUser = () => {
     actualizarPermisos,
     datapermisos,
   } = usePermisosStore();
-  const { accion, selectItem: selectItemAsignaciones } =
-    useAsignacionCajaSucursalStore();
+
   const { mostrarModulos } = useModulosStore();
   const { mostrarRoles, rolesItemSelect, setRolesItemSelect,dataroles } = useRolesStore();
-  const { itemSelect } = useUsuariosStore();
+  const itemSelect = dataSelect;
+  const idUsuario = itemSelect?.id_usuario;
 
-  const { data: datamodulos, isLoading: isLoadingModulos } = useQuery({
-    queryKey: ["mostrar modulos"],
-    queryFn: mostrarModulos,
-  });
+  const { data: datamodulos, isLoading: isLoadingModulos } = useQuery({
+    queryKey: ["mostrar modulos"],
+    queryFn: mostrarModulos,
+  });
 
-  const { data: dataPermisosDefault, isLoading: isLoadingPermisosDefault } =
-    useQuery({
-      queryKey: ["mostrar permisos default"],
-      queryFn: mostrarPermisosDefault,
-    });
-  const { isLoading: isLoadingPermisosUser } = useQuery({
-    queryKey: [
-      "mostrar permisos por usuario",
-      { id_usuario: itemSelect?.id_usuario },
-    ],
-    queryFn: () => mostrarPermisos({ id_usuario: itemSelect?.id_usuario }),
-    enabled: !!itemSelect,
-  });
+const { data: dataPermisosDefault, isLoading: isLoadingPermisosDefault } =
+    useQuery({
+      queryKey: ["mostrar permisos default", idUsuario], // 👈 Añade el ID al key
+      queryFn: mostrarPermisosDefault,
+      enabled: !!idUsuario, // 👈 Añade el 'enabled'
+    });
+  console.log("CÓDIGO NUEVO CARGADO. ID de usuario:", idUsuario); 
+  const { isLoading: isLoadingPermisosUser } = useQuery({
+    queryKey: [
+      "mostrar permisos por usuario",
+      { id_usuario: idUsuario },
+    ],
+    queryFn: () => mostrarPermisos({ id_usuario: idUsuario }),
+    enabled: !!idUsuario, // 👈 Esto ya estaba bien
+  });
   const mutation = useMutation({
     mutationKey: ["actualizar permisos"],
     mutationFn: () => actualizarPermisos(),
   });
+useEffect(() => {
+    // No hagas nada si las props no están listas
+    if (!accion || !dataPermisosDefault) return; 
+
+    if (accion === "Nuevo") {
+      // Si es Nuevo, filtra los permisos por defecto según el ROL seleccionado
+      const permisosPorRol =
+        dataPermisosDefault
+          ?.filter((permiso) => permiso.id_rol === rolesItemSelect?.id)
+          .map((permiso) => permiso.id_modulo) || [];
+      setSelectedModules(permisosPorRol);
+    
+    // Si es Editar y TENEMOS un usuario, setea su ROL en el dropdown
+    } else if (accion === "Editar" && itemSelect) { 
+       setRolesItemSelect({
+          id: itemSelect.id_rol,
+          nombre: itemSelect.rol,
+       });
+    }
+  }, [
+      accion, 
+      itemSelect, 
+      dataPermisosDefault, 
+      rolesItemSelect?.id, // 👈 Importante: se actualiza al cambiar el dropdown de rol
+      setSelectedModules, 
+      setRolesItemSelect
+    ]);
   useEffect(() => {
-    if (accion === "Nuevo") {
-      const permisosPorRol =
-        dataPermisosDefault
-          ?.filter((permiso) => permiso.id_rol === rolesItemSelect?.id)
-          .map((permiso) => permiso.id_modulo) || [];
-      setSelectedModules(permisosPorRol);
-    }else{
-       setRolesItemSelect({
-          id: itemSelect.id_rol,
-          nombre: itemSelect.rol,
-       });
-    }
-  }, []);
-  useEffect(() => {
-    if (accion !== "Nuevo" && datapermisos) {
-      const permisosUsuario = datapermisos.map((p) => p.idmodulo);
-      setSelectedModules(permisosUsuario);
-    }
-  }, [accion, datapermisos]);
-  const isLoading =
-    isLoadingModulos ||
-   
-    isLoadingPermisosDefault ||
-    isLoadingPermisosUser;
+    // Este carga los permisos guardados del usuario (solo en modo Editar)
+    if (accion !== "Nuevo" && datapermisos) {
+      const permisosUsuario = datapermisos.map((p) => p.idmodulo);
+      setSelectedModules(permisosUsuario);
+    }
+  }, [accion, datapermisos, setSelectedModules]); // 👈 Dependencias correctas
+
+  const isLoading =
+    isLoadingModulos ||
+    isLoadingPermisosDefault ||
+    // Solo espera los permisos del usuario si estamos en modo Editar
+    (isLoadingPermisosUser && accion === "Editar"); 
+  
   if (isLoading) return <BarLoader />;
   
   return (

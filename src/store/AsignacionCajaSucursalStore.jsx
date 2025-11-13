@@ -23,6 +23,15 @@ export const useAsignacionCajaSucursalStore = create((set) => ({
   dataSucursalesAsignadas: null,
   sucursalesItemSelectAsignadas: null,
   mostrarSucursalAsignadas: async (p) => {
+    // 👇 AÑADIR ESTA VALIDACIÓN
+    if (!p.id_usuario) {
+      console.warn("mostrarSucursalAsignadas OMITIDO: No se proporcionó id_usuario.");
+      // Limpiamos los datos para evitar mostrar datos de un usuario anterior
+      set({ dataSucursalesAsignadas: null });
+      set({ sucursalesItemSelectAsignadas: null });
+      return null; // Detenemos la ejecución
+    }
+    // 👇 Si el ID es válido, la consulta se ejecuta como siempre
     const { data } = await supabase
       .from(tabla)
       .select(`*, sucursales(*), caja(*)`)
@@ -31,7 +40,6 @@ export const useAsignacionCajaSucursalStore = create((set) => ({
     set({ sucursalesItemSelectAsignadas: data && data[0] });
     return data;
   },
-  datausuariosAsignados: [],
 
   mostrarUsuariosAsignados: async (p) => {
     const response = await MostrarUsuariosAsignados(p);

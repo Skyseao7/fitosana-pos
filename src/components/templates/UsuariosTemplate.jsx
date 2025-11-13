@@ -47,6 +47,7 @@ export function UsuariosTemplate() {
           bgcolor={v.colorPrincipal}
           titulo="Nuevo"
           icono={<v.iconoagregar />}
+          color="white"
         />
       </section>
       <section className="area2">

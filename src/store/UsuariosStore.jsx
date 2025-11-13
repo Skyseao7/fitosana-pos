@@ -42,7 +42,6 @@ export const useUsuariosStore = create((set) => ({
         .from("asignacion_sucursal")
         .select("sucursales(id_empresa)") // Solo queremos el id_empresa de la tabla sucursales
         .eq("id_usuario", dataUsuario.id)
-        .maybeSingle(); // Asumimos que un usuario está en una sucursal
 
       if (errorAsignacion) {
         console.error("💥 Supabase error en Asignacion:", errorAsignacion.message);
@@ -51,11 +50,13 @@ export const useUsuariosStore = create((set) => ({
 
       // Paso 3: Combinar los datos del usuario con el id_empresa
       const fullData = { 
-        ...dataUsuario, 
-        // El resultado es { sucursales: { id_empresa: 123 } }
-        // Usamos Optional Chaining (?.) por si no tiene asignación
-        id_empresa: dataAsignacion?.sucursales?.id_empresa || null 
-      };
+        ...dataUsuario, 
+        // dataAsignacion AHORA ES UN ARRAY [].
+        // Tomamos la id_empresa de la PRIMERA asignación que encuentre.
+        id_empresa: (dataAsignacion && dataAsignacion.length > 0) 
+          ? dataAsignacion[0].sucursales.id_empresa 
+          : null 
+      };
 
       console.log("📥 Resultado Supabase Combinado:", fullData);
 

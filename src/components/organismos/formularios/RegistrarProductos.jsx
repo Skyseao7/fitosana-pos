@@ -79,7 +79,7 @@ export function RegistrarProductos({
   const queryClient = useQueryClient();
 
   // React Hook Form
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, getValues, formState: { errors } } = useForm({
      defaultValues: { /* ... tus defaultValues ... */
         nombre: defaultNombre,
         precio_venta: defaultPVenta,
@@ -169,6 +169,8 @@ export function RegistrarProductos({
   const handleCreateMarca = async (inputValue) => {
     if (isCreatingMarca || !inputValue || !dataempresa?.id) return;
 
+    const currentFormValues = getValues();
+
     setIsCreatingMarca(true);
     const nombreMarca = inputValue.toUpperCase(); // Guarda en mayúsculas
 
@@ -178,6 +180,12 @@ export function RegistrarProductos({
         toast.info(`La marca "${nombreMarca}" ya existe.`);
         selectCategoria(exists); // Simplemente la selecciona
         setIsCreatingMarca(false);
+        setValue("nombre", currentFormValues.nombre);
+        setValue("precio_venta", currentFormValues.precio_venta);
+        setValue("precio_compra", currentFormValues.precio_compra);
+        setValue("stock", currentFormValues.stock);
+        setValue("stock_minimo", currentFormValues.stock_minimo);
+        setValue("detalles", currentFormValues.detalles);
         return;
     }
 
@@ -209,6 +217,12 @@ export function RegistrarProductos({
       toast.error(`No se pudo crear la marca: ${error.message}`);
     } finally {
       setIsCreatingMarca(false);
+      setValue("nombre", currentFormValues.nombre);
+      setValue("precio_venta", currentFormValues.precio_venta);
+      setValue("precio_compra", currentFormValues.precio_compra);
+      setValue("stock", currentFormValues.stock);
+      setValue("stock_minimo", currentFormValues.stock_minimo);
+      setValue("detalles", currentFormValues.detalles);
     }
   };
   // 👆 FIN DEL NUEVO MANEJADOR
@@ -504,6 +518,7 @@ export function RegistrarProductos({
               titulo="Guardar"
               bgcolor="#1d8850" // <-- Cambia el color aquí
               disabled={isPending}
+              color={"white"}
             />
           </div>
         </Form>

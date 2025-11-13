@@ -1,6 +1,14 @@
 import { supabase } from "../supabase/supabase.config";
 const tabla = "permisos";
+
 export async function MostrarPermisos(p) {
+  // 👇 INICIO DE LA VALIDACIÓN
+  if (!p.id_usuario) {
+    console.warn("MostrarPermisos OMITIDO: No se proporcionó id_usuario.");
+    return []; // Devuelve un array vacío para no romper React Query
+  }
+  // 👆 FIN DE LA VALIDACIÓN
+
   const { data } = await supabase
     .from(tabla)
     .select(`*, modulos(*)`)
@@ -8,6 +16,13 @@ export async function MostrarPermisos(p) {
   return data;
 }
 export async function MostrarPermisosConfiguracion(p) {
+  // 👇 INICIO DE LA VALIDACIÓN
+  if (!p.id_usuario) {
+    console.warn("MostrarPermisosConfiguracion OMITIDO: No se proporcionó id_usuario.");
+    return []; // Devuelve un array vacío
+  }
+  // 👆 FIN DE LA VALIDACIÓN
+
   const { data } = await supabase
     .from(tabla)
     .select(`*, modulos!inner(*)`)
@@ -37,6 +52,13 @@ export async function EliminarPermisos(p) {
 }
 
 export async function MostrarPermisosGlobales(p) {
+  // 👇 INICIO DE LA VALIDACIÓN
+  if (!p.id_usuario) {
+    console.warn("MostrarPermisosGlobales OMITIDO: No se proporcionó id_usuario.");
+    return []; // Devuelve un array vacío
+  }
+  // 👆 FIN DE LA VALIDACIÓN
+
   const { data } = await supabase
     .from(tabla)
     .select(`*, modulos(*)`)

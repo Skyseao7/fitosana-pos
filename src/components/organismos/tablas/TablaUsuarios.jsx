@@ -137,12 +137,10 @@ export function TablaUsuarios({
       header: "",
       enableSorting: false,
       cell: (info) => (
-        <td data-title="Acciones" className="ContentCell">
-          <ContentAccionesTabla
-            funcionEditar={() => editar(info.row.original)}
-            funcionEliminar={() => eliminar(info.row.original)}
-          />
-        </td>
+        <ContentAccionesTabla
+          funcionEditar={() => editar(info.row.original)}
+          funcionEliminar={() => eliminar(info.row.original)}
+        />
       ),
       enableColumnFilter: true,
       filterFn: (row, columnId, filterStatuses) => {

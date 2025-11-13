@@ -42,7 +42,7 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
     ],
     queryFn: () =>
       mostrarCajaXSucursal({ id_sucursal: sucursalesItemSelect?.id }),
-    enabled: !!sucursalesItemSelect,
+    enabled: !!sucursalesItemSelect?.id,
   });
   const {
     register,
@@ -58,31 +58,31 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
     },
   });
   const insertar = async (data) => {
+    // 👇 OBTENEMOS EL ESTADO MÁS RECIENTE DIRECTO DE LOS STORES
+    const currentRole = useRolesStore.getState().rolesItemSelect;
+    const currentSucursal = useSucursalesStore.getState().sucursalesItemSelect;
+    const currentCaja = useCajasStore.getState().cajaSelectItem;
+
     if (accion === "Editar") {
       const p = {
         id: itemSelect?.id_usuario,
         nombres: data.nombres,
         nro_doc: data.nro_doc,
         telefono: data.telefono,
-        id_rol: rolesItemSelect?.id,
-
-        //datos asignacion caja y sucursal
-       
-        
+        id_rol: currentRole?.id,
       };
       console.log("pEditar",p)
       await editarUsuarios(p);
     } else {
       const p = {
-        
         nombres: data.nombres,
         nro_doc: data.nro_doc,
         telefono: data.telefono,
-        id_rol: rolesItemSelect?.id,
+        id_rol: currentRole?.id,
         correo: data.email,
         //datos asignacion caja y sucursal
-        id_sucursal: sucursalesItemSelect?.id,
-        id_caja: cajaSelectItem?.id,
+        id_sucursal: currentSucursal?.id,
+        id_caja: currentCaja?.id,
         //datos credenciales
         email: data.email,
         pass: data.pass,
@@ -239,8 +239,11 @@ export function RegistrarUsuarios({ accion, dataSelect, onClose }) {
               </article>
             </section>
             <section className="area2">
-              <PermisosUser />
-            </section>
+              <PermisosUser 
+                  accion={accion} 
+                  dataSelect={dataSelect} 
+                />
+            </section>
           </section>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Btn1 titulo={"Guardar"} bgcolor={"#1d8850"} color={"#fff"} width={"20%"} />
