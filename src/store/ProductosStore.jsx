@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { CrearProductoConStock } from "../supabase/crudProductos";
 import {
-  BuscarProductos,MostrarProductos,EliminarProductos,InsertarProductos,EditarProductos, Generarcodigo,
+  BuscarProductos,MostrarProductos,EliminarProductos,EditarProductos, Generarcodigo,
   supabase
 } from "../index";
 const tabla ="productos"
@@ -19,7 +20,6 @@ export const useProductosStore = create((set, get) => ({
     const response = await MostrarProductos(p);
     set({ parametros: p });
     set({ dataProductos: response });
-    set({ productosItemSelect: response[0] });
     set({refetchs:p.refetchs})
     return response;
   },
@@ -32,12 +32,15 @@ export const useProductosStore = create((set, get) => ({
     set({ productosItemSelect: null });
   },
   insertarProductos: async (p) => {
-  const response=  await InsertarProductos(p);
-    const { mostrarProductos } = get();
-    const { parametros } = get();
-    set(mostrarProductos(parametros));
-    return response;
-  },
+    // 👇 CAMBIO: Usamos la nueva función que importaste arriba
+    // Esta función llama al RPC 'crear_producto_con_stock'
+    await CrearProductoConStock(p); 
+    
+    // Refrescamos la lista (si se usa el store para mostrar)
+    const { mostrarProductos } = get();
+    const { parametros } = get();
+    set(mostrarProductos(parametros));
+  },
   eliminarProductos: async (p) => {
     await EliminarProductos(p);
     const { mostrarProductos } = get();

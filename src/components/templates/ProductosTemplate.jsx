@@ -10,7 +10,8 @@ import {
   useEmpresaStore,
   useMostrarProductosQuery, // Hook de React Query
   useCategoriasStore,
-  Select
+  Select,
+  useSucursalesStore
 } from "../../index";
 import { v } from "../../styles/variables";
 import ConfettiExplosion from "react-confetti-explosion";
@@ -21,27 +22,27 @@ export function ProductosTemplate() {
   const [openRegistro, SetopenRegistro] = useState(false);
   const { generarCodigo } = useProductosStore();
   const { dataempresa } = useEmpresaStore();
+  const { sucursalesItemSelect } = useSucursalesStore();
+  console.log("SUCURSAL SELECCIONADA (en ProductosTemplate):", sucursalesItemSelect);
   const [accion, setAccion] = useState("");
   const [dataSelect, setdataSelect] = useState([]);
   const [isExploding, setIsExploding] = useState(false);
 
   // Datos de Productos (React Query)
   const { data: dataProductosOriginal, isLoading, isError, error, refetch, isFetching } =
-    useMostrarProductosQuery(dataempresa?.id);
+    useMostrarProductosQuery(dataempresa?.id, sucursalesItemSelect?.id_sucursal);
 
   // Datos y estado para filtro de Marca
-  const { datacategorias, selectCategoria, categoriaItemSelect } = useCategoriasStore(); // Obtén las categorías/marcas
-  const [filtroMarca, setFiltroMarca] = useState(null); // Estado para la marca seleccionada
-
-  // Estado para el buscador general
+  const { datacategorias } = useCategoriasStore(); 
+  const [filtroMarca, setFiltroMarca] = useState(null); 
   const [textoBusquedaGeneral, setTextoBusquedaGeneral] = useState("");
 
   useEffect(() => {
-    // Llama a refetch solo si tenemos id_empresa.
-    if (dataempresa?.id) {
+    // Refetch si la empresa o la SUCURSAL cambian
+    if (dataempresa?.id && sucursalesItemSelect?.id_sucursal) {
        refetch();
     } 
-  }, [dataempresa?.id, refetch]);
+  }, [dataempresa?.id, sucursalesItemSelect?.id_sucursal, refetch]);
 
   // FILTRADO CLIENT-SIDE: Filtra los productos basados en la búsqueda general y la marca
   const dataProductosFiltrados = useMemo(() => {
@@ -73,8 +74,6 @@ export function ProductosTemplate() {
     setIsExploding(false);
     generarCodigo();
   }
-
-  console.log("Texto Búsqueda:", textoBusquedaGeneral);
 
   if (isLoading && !dataProductosOriginal) { return <span>Cargando productos...</span>; }
   if (isError) { return <span>Error al cargar productos: {error?.message || 'Error desconocido'}</span>; }
@@ -109,7 +108,8 @@ export function ProductosTemplate() {
       )}
 
       <section className="area1">
-        <Title>Productos</Title>
+        <Title>Productos  </Title>
+        <h2>| SUCURSAL: {sucursalesItemSelect?.sucursales?.nombre}</h2>
         {/* Muestra un loader pequeño si está haciendo refetch en background */}
         {isFetching && <span style={{fontSize: '0.8em', opacity: 0.7}}>🔄</span>} 
         

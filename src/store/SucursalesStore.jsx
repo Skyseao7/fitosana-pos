@@ -19,7 +19,6 @@ export const useSucursalesStore = create((set) => ({
   mostrarSucursales: async (p) => {
     const response = await MostrarSucursales(p);
     set({ dataSucursales: response });
-    set({ sucursalesItemSelect: response[0] });
     return response;
   },
 

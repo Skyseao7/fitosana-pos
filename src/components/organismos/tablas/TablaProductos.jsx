@@ -105,7 +105,7 @@ export function TablaProductos({
         enableColumnFilter: true, 
       },
        { // Columna Ubicación
-        accessorKey: "ubicaciones", 
+        accessorKey: "detalles", 
         header: "Detalles", 
         cell: (info) => {
           const ubicacionValue = info.getValue(); 

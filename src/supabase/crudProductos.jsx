@@ -34,10 +34,20 @@ export async function EliminarProductos(p) {
   }
 }
 export async function EditarProductos(p) {
-  const { error } = await supabase.rpc("editarproductos", p);
-  if (error) {
-    throw new Error(error.message);
-  }
+  const { error } = await supabase.rpc('editarproductos', {
+    _id: p._id,
+    _nombre: p._nombre,
+    _precio_venta: p._precio_venta,
+    _precio_compra: p._precio_compra,
+    _id_categoria: p._id_categoria,
+    _codigo_barras: p._codigo_barras,
+    _codigo_interno: p._codigo_interno,
+    _id_empresa: p._id_empresa,
+    _sevende_por: p._sevende_por,
+    _maneja_inventarios: p._maneja_inventarios,
+    _detalles: p._detalles // 👈 AÑADIDO
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function MostrarUltimoProducto(p) {
@@ -49,4 +59,23 @@ export async function MostrarUltimoProducto(p) {
     .maybeSingle();
 
   return data;
+}
+export async function CrearProductoConStock(p) {
+  const { error } = await supabase.rpc('crear_producto_con_stock', {
+    _nombre: p._nombre,
+    _precio_venta: p._precio_venta,
+    _precio_compra: p._precio_compra,
+    _id_categoria: p._id_categoria,
+    _codigo_barras: p._codigo_barras,
+    _codigo_interno: p._codigo_interno,
+    _id_empresa: p._id_empresa,
+    _sevende_por: p._sevende_por,
+    _id_almacen: p._id_almacen, // Nuevo parámetro
+    _stock_inicial: p._stock_inicial, // Nuevo parámetro
+    _detalles: p._detalles,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

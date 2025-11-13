@@ -5,6 +5,8 @@ import {
   SecondarylinksArray,
   ToggleTema,
   useAuthStore,
+  useSucursalesStore, // 1. Para leer y escribir el estado global
+  SelectList, // 2. El componente dropdown
 } from "../../../index";
 import { v } from "../../../styles/variables";
 import { NavLink } from "react-router-dom";
@@ -12,9 +14,11 @@ import { Icon } from "@iconify/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 
-export function Sidebar({ state, setState }) {
-  const { cerrarSesion } = useAuthStore();
-  const queryClient = useQueryClient();
+export function Sidebar({ state, setState, dataSucursalesAsignadas }) {
+  const { cerrarSesion } = useAuthStore();
+  const queryClient = useQueryClient();
+  // 1. Leemos el estado global de la sucursal
+  const { sucursalesItemSelect, selectSucursal } = useSucursalesStore();
   const salir = () => {
     Swal.fire({
       title: "¿Estás seguro/a?",
@@ -42,6 +46,14 @@ export function Sidebar({ state, setState }) {
             <img src={v.logo} />
           </div>
         </div>
+        <ContainerSucursal $isopen={state.toString()}>
+          <SelectList
+            data={dataSucursalesAsignadas}     // 1. Usa los datos de las sucursales asignadas
+            itemSelect={sucursalesItemSelect}  // 2. Muestra el valor del store global
+            onSelect={(p) => selectSucursal(p)} // 3. ¡ACTUALIZA el store global al cambiar!
+            displayField="nombre" 
+          />
+        </ContainerSucursal>
         {LinksArray.map(({ icon, label, to }) => (
           <div
             className={state ? "LinkContainer active" : "LinkContainer"}
@@ -108,6 +120,16 @@ export function Sidebar({ state, setState }) {
     </Main>
   );
 }
+const ContainerSucursal = styled.div`
+  padding: 0 8px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  
+  // Oculta el selector cuando la barra está cerrada
+  display: ${({ $isopen }) => ($isopen === "true" ? `block` : `none`)};
+  opacity: ${({ $isopen }) => ($isopen === "true" ? 1 : 0)};
+  transition: all 0.3s;
+`;
 const Container = styled.div`
   background: ${({ theme }) => theme.bgtotal};
   color: ${(props) => props.theme.text};

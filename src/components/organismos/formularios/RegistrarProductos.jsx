@@ -1,33 +1,25 @@
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import styled from "styled-components";
-import { v } from "../../../styles/variables"; // Asegúrate que todos los iconos usados aquí existan en 'v'
+import { v } from "../../../styles/variables";
 import {
   InputText,
   Btn1,
   useProductosStore,
-  ContainerSelector, // Usado dentro de ContainerStock y secciones
+  ContainerSelector,
   useSucursalesStore,
-  useCategoriasStore, // Asumiendo que esto es Marca
+  useCategoriasStore,
   Btngenerarcodigo,
   useAlmacenesStore,
 } from "../../../index";
 import { useForm } from "react-hook-form";
 import { useEmpresaStore } from "../../../store/EmpresaStore";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Device } from "../../../styles/breakpoints";
 import { useEffect, useState, useMemo, useCallback } from "react";
-// Swal no se usa directamente en este fragmento
 import { SelectList } from "../../ui/lists/SelectList";
-import { useStockStore } from "../../../store/StockStore";
 import { toast } from "sonner";
 import { BtnClose } from "../../ui/buttons/BtnClose";
-
-// --- PLACEHOLDER PARA ICONO DETALLES ---
-// Si no tienes v.iconodetalles definido en variables.jsx, descomenta y usa uno genérico
-// import { BsTextParagraph } from "react-icons/bs";
-// const IconoDetallesPlaceholder = () => <BsTextParagraph />;
-// --- FIN PLACEHOLDER ---
 
 export function RegistrarProductos({
   onClose,
@@ -38,17 +30,13 @@ export function RegistrarProductos({
 }) {
   if (!state) return null;
 
-  // Define valores por defecto usando optional chaining y defaults
-  const defaultSeVendePor = dataSelect?.sevende_por || "General";
   const defaultNombre = dataSelect?.nombre || '';
   const defaultPVenta = dataSelect?.precio_venta || 0;
-  const defaultPCompra = dataSelect?.precio_compra || 0;
+  const defaultPCompra = dataSelect?.precio_compra || 0; // Tu C/U
   const defaultCodBarras = dataSelect?.codigo_barras || '';
   const defaultCodInterno = dataSelect?.codigo_interno || '';
-  const defaultStock = dataSelect?.stock || 0;
-  const defaultStockMin = dataSelect?.stock_minimo || 0;
-  const defaultDetalles = dataSelect?.ubicaciones || '';
-
+  const defaultDetalles = dataSelect?.detalles || '';
+  
   const unidadesDeVenta = useMemo(() => [ 
     { id: "General", nombre: "General" },
     { id: "Bebida", nombre: "Bebida" }, { id: "Caja", nombre: "Caja" },
@@ -58,428 +46,310 @@ export function RegistrarProductos({
   ], []);
 
   // Estados locales
-  const [sevendepor, setSevendepor] = useState(defaultSeVendePor);
   const [sevendePorItemSelect, setSevendePorItemSelect] = useState(
-     unidadesDeVenta.find(u => u.id === defaultSeVendePor) || unidadesDeVenta[0]
+     unidadesDeVenta.find(u => u.nombre === dataSelect?.sevende_por) || unidadesDeVenta[0]
   );
   const [randomCodeinterno, setRandomCodeinterno] = useState(defaultCodInterno);
   const [randomCodebarras, setRandomCodebarras] = useState(defaultCodBarras);
-  const [stateInventarios] = useState(true);
   const [isCreatingMarca, setIsCreatingMarca] = useState(false);
 
-  // Stores y Hooks
+// --- Stores ---
   const { insertarProductos, editarProductos, generarCodigo, codigogenerado } = useProductosStore(); 
-  const { insertarStock, mostrarStockXAlmacenYProducto, actualizarDetallesStock } = useStockStore();
   const { dataempresa } = useEmpresaStore();
-  const { mostrarAlmacenesXSucursal, almacenSelectItem, setAlmacenSelectItem } = useAlmacenesStore();
-  const { dataSucursales, selectSucursal, sucursalesItemSelect } = useSucursalesStore();
+  const { mostrarAlmacenesXSucursal } = useAlmacenesStore(); // Solo la función
+  const { dataSucursales, sucursalesItemSelect } = useSucursalesStore(); // Global
   const { datacategorias, selectCategoria, categoriaItemSelect, insertarCategorias } = useCategoriasStore();
-
-  // 👇 OBTÉN queryClient 👇
   const queryClient = useQueryClient();
 
-  // React Hook Form
-  const { register, handleSubmit, setValue, watch, getValues, formState: { errors } } = useForm({
-     defaultValues: { /* ... tus defaultValues ... */
+  // --- Estados Locales del Modal ---
+  // ESTA ES LA SOLUCIÓN: Estados locales para los dropdowns
+  const [localSucursal, setLocalSucursal] = useState(null);
+  const [localAlmacen, setLocalAlmacen] = useState(null);
+
+  // --- Form ---
+  const { register, handleSubmit, setValue, getValues, formState: { errors } } = useForm({
+      defaultValues: {
         nombre: defaultNombre,
         precio_venta: defaultPVenta,
         precio_compra: defaultPCompra,
-        stock: defaultStock,
-        stock_minimo: defaultStockMin,
+        stock: 0,
         detalles: defaultDetalles,
-     }
+      }
   });
 
-  // --- React Query Hooks ---
-  const { data: dataStockEspecifico, refetch: refetchStockEspecifico } = useQuery({ /* ... tu query de stock ... */
-     queryKey: ["mostrar stock especifico", { id_producto: dataSelect?.id, id_almacen: almacenSelectItem?.id }],
-    queryFn: () => mostrarStockXAlmacenYProducto({ id_almacen: almacenSelectItem?.id, id_producto: dataSelect?.id }),
-    enabled: !!dataSelect?.id && !!almacenSelectItem?.id && accion === 'Editar',
-  });
-  const { data: dataAlmacenes, isLoading: isLoadingAlmacenes } = useQuery({ /* ... tu query de almacenes ... */
-    queryKey: ["mostrar almacenes x sucursal", { id_sucursal: sucursalesItemSelect?.id }],
-    queryFn: () => mostrarAlmacenesXSucursal({ id_sucursal: sucursalesItemSelect?.id }),
-    enabled: !!sucursalesItemSelect?.id,
+  // --- React Query ---
+  // 1. Cargar almacenes basado en el 'localSucursal'
+  const { data: dataAlmacenes, isLoading: isLoadingAlmacenes } = useQuery({
+    
+    // 👇 CAMBIO AQUÍ: Usa '.id' para la query key
+    queryKey: ["almacenesParaModal", localSucursal?.id], 
+    
+    // 👇 CAMBIO AQUÍ: Pasa '.id' como el parámetro que espera la función
+    queryFn: () => mostrarAlmacenesXSucursal({ id_sucursal: localSucursal.id }),
+    
+    // 👇 CAMBIO AQUÍ: Habilita usando '.id'
+    enabled: !!localSucursal?.id && accion === 'Nuevo' && state,
   });
 
-  // --- Effects ---
-  useEffect(() => { /* ... tu useEffect para setear valores en edición ... */
-      if (accion === "Editar" && dataSelect) {
+  // --- EFECTOS ---
+
+  // 2. Efecto Principal: Se activa cuando el modal se abre/cierra o cambia la data
+  useEffect(() => {
+    if (accion === "Editar" && dataSelect) {
+      // Lógica para Editar (tu código original está bien)
       setValue("nombre", dataSelect.nombre || '');
       setValue("precio_venta", dataSelect.precio_venta || 0);
       setValue("precio_compra", dataSelect.precio_compra || 0);
-      setValue("detalles", dataSelect.ubicaciones || '');
-
+      setValue("detalles", dataSelect.detalles || '');
       setRandomCodebarras(dataSelect.codigo_barras || '');
       setRandomCodeinterno(dataSelect.codigo_interno || '');
-
       const catInitial = datacategorias?.find(c => c.id === dataSelect.id_categoria);
       if (catInitial) selectCategoria(catInitial);
-
       const sevendeInitial = unidadesDeVenta.find(u => u.nombre === dataSelect.sevende_por);
-      handleSeVendePorSelect(sevendeInitial || unidadesDeVenta[0]);
+      setSevendePorItemSelect(sevendeInitial || unidadesDeVenta[0]);
 
-
-    } else if (accion === "Nuevo") {
-        generarCodigoInterno();
-        setRandomCodebarras('');
-        selectCategoria(null);
-        handleSeVendePorSelect(unidadesDeVenta[0]);
-        setValue("nombre", '');
-        setValue("precio_venta", 0);
-        setValue("precio_compra", 0);
-        setValue("stock", 0);
-        setValue("stock_minimo", 0);
-        setValue("detalles", '');
-
+    } else if (accion === "Nuevo" && state) {
+      // Lógica para Nuevo (cuando se abre)
+      generarCodigoInterno();
+      setRandomCodebarras('');
+      selectCategoria(null);
+      setSevendePorItemSelect(unidadesDeVenta[0]);
+      
+      // 👇 INICIALIZA el estado local con el global
+      setLocalSucursal(sucursalesItemSelect); 
+      setLocalAlmacen(null); // Resetea el almacén local
     }
-  }, [accion, dataSelect, setValue, datacategorias, unidadesDeVenta, selectCategoria]);
+  }, [accion, dataSelect, state]); // Depende de 'state' para saber cuándo se abre
 
-  useEffect(() => { /* ... tu useEffect para setear stock/ubicación desde dataStockEspecifico ... */
-       if (accion === 'Editar' && dataStockEspecifico) {
-        setValue("stock", dataStockEspecifico.stock || 0);
-        setValue("stock_minimo", dataStockEspecifico.stock_minimo || 0);
-        setValue("detalles", dataStockEspecifico.ubicacion || '');
-     }
-  }, [dataStockEspecifico, accion, setValue]);
+  // 3. Efecto para auto-seleccionar el primer almacén
+  useEffect(() => {
+    // Si la carga terminó y hay almacenes, selecciona el primero
+    if (!isLoadingAlmacenes && dataAlmacenes && dataAlmacenes.length > 0) {
+      setLocalAlmacen(dataAlmacenes[0]);
+    } else {
+      // Si no hay almacenes, asegúrate que esté en null
+      setLocalAlmacen(null);
+    }
+  }, [dataAlmacenes, isLoadingAlmacenes]); // Depende de la data del query
 
-  // --- Handlers ---
-  const handleSeVendePorSelect = useCallback((item) => { // useCallback
-    setSevendePorItemSelect(item);
-    setSevendepor(item?.nombre || unidadesDeVenta[0].nombre);
-  }, [unidadesDeVenta]);
 
-  const generarCodigoBarras = useCallback(() => { // useCallback
+  // --- HANDLERS ---
+  // 4. Handler para el dropdown de sucursal LOCAL
+  const handleSucursalLocalChange = (sucursalSeleccionada) => {
+    setLocalSucursal(sucursalSeleccionada);
+    setLocalAlmacen(null); // Resetea el almacén
+  };
+
+  const generarCodigoBarras = useCallback(() => { 
     generarCodigo();
     setRandomCodebarras(codigogenerado);
   }, [generarCodigo, codigogenerado]);
 
-  const generarCodigoInterno = useCallback(() => { // useCallback
+  const generarCodigoInterno = useCallback(() => { 
     generarCodigo();
     setRandomCodeinterno(codigogenerado);
   }, [generarCodigo, codigogenerado]);
 
-  const handleChangeinterno = useCallback((event) => setRandomCodeinterno(event.target.value), []);
-  const handleChangebarras = useCallback((event) => setRandomCodebarras(event.target.value), []);
-
-  const cerrarFormulario = useCallback(() => { // useCallback
-    onClose();
-  }, [onClose, setIsExploding]);
-  // 👇 4. AÑADE EL MANEJADOR PARA CREAR LA MARCA
+  // Crear Marca
   const handleCreateMarca = async (inputValue) => {
     if (isCreatingMarca || !inputValue || !dataempresa?.id) return;
-
-    const currentFormValues = getValues();
-
     setIsCreatingMarca(true);
-    const nombreMarca = inputValue.toUpperCase(); // Guarda en mayúsculas
-
-    // Revisa si ya existe (buena práctica)
-    const exists = datacategorias.find(cat => cat.nombre.toUpperCase() === nombreMarca);
-    if (exists) {
-        toast.info(`La marca "${nombreMarca}" ya existe.`);
-        selectCategoria(exists); // Simplemente la selecciona
-        setIsCreatingMarca(false);
-        setValue("nombre", currentFormValues.nombre);
-        setValue("precio_venta", currentFormValues.precio_venta);
-        setValue("precio_compra", currentFormValues.precio_compra);
-        setValue("stock", currentFormValues.stock);
-        setValue("stock_minimo", currentFormValues.stock_minimo);
-        setValue("detalles", currentFormValues.detalles);
-        return;
-    }
-
-    // Prepara el objeto 'p' que espera tu función SQL 'insertarcategorias'
-    const p = {
-      _nombre: nombreMarca,
-      _color: "#CCCCCC", // Asigna un color por defecto
-      _icono: "-",       // Asigna un icono por defecto
-      _id_empresa: dataempresa.id
-    };
-
+    const nombreMarca = inputValue.toUpperCase();
+    const p = { _nombre: nombreMarca, _color: "#CCCCCC", _icono: "-", _id_empresa: dataempresa.id };
     try {
-      // Llama a la función de tu store. 
-      // Tu store espera (p, file), así que pasamos 'null' para el archivo.
       await insertarCategorias(p, null); 
-      
-      // Después del await, el store ya refrescó 'datacategorias'
-      // Busca la nueva opción en la lista actualizada
       const newOption = useCategoriasStore.getState().datacategorias.find(cat => cat.nombre === nombreMarca);
-      
-      if (newOption) {
-        selectCategoria(newOption); // Selecciona la marca recién creada
-        toast.success(`Marca "${nombreMarca}" creada.`);
-      } else {
-         toast.warning("Marca creada, pero no se pudo seleccionar automáticamente.");
-      }
+      if (newOption) selectCategoria(newOption);
+      toast.success(`Marca "${nombreMarca}" creada.`);
     } catch (error) {
-      console.error("Error al crear la marca:", error);
-      toast.error(`No se pudo crear la marca: ${error.message}`);
+      toast.error(`Error al crear marca: ${error.message}`);
     } finally {
       setIsCreatingMarca(false);
-      setValue("nombre", currentFormValues.nombre);
-      setValue("precio_venta", currentFormValues.precio_venta);
-      setValue("precio_compra", currentFormValues.precio_compra);
-      setValue("stock", currentFormValues.stock);
-      setValue("stock_minimo", currentFormValues.stock_minimo);
-      setValue("detalles", currentFormValues.detalles);
     }
   };
-  // 👆 FIN DEL NUEVO MANEJADOR
-  // --- Mutation ---
-  const { mutate: guardarProducto, isPending } = useMutation({ /* ... tu useMutation ... */
-      mutationFn: async (formData) => {
-      // VALIDATIONS (Mantén tus validaciones)
-      if (!formData.nombre) throw new Error("El Nombre es obligatorio.");
-      if (!categoriaItemSelect?.id && accion === 'Nuevo') throw new Error("Seleccione una Marca.");
-      if (!categoriaItemSelect?.id && accion === 'Editar' && !dataSelect?.id_categoria) throw new Error("Seleccione una Marca.");
-      if (stateInventarios && !almacenSelectItem?.id && accion === 'Nuevo') throw new Error("Seleccione un Almacén.");
-      if (stateInventarios && !almacenSelectItem?.id && accion === 'Editar' && !dataStockEspecifico) throw new Error("Seleccione un Almacén para añadir stock inicial.");
 
-      // Preparación de datos (incluyendo nombre en mayúsculas y códigos)
+  // --- MUTATION PRINCIPAL ---
+  const { mutate: guardarProducto, isPending } = useMutation({
+     mutationFn: async (formData) => {
+      // Validaciones
+      if (!categoriaItemSelect?.id) throw new Error("Seleccione una Marca.");
+      
+      // Almacén solo obligatorio si es Nuevo
+      if (accion === 'Nuevo' && !localAlmacen?.id) throw new Error("Seleccione un Almacén para el stock inicial.");
+      
       const nombreEnMayusculas = formData.nombre.toUpperCase();
       const codigoBarrasFinal = randomCodebarras || (accion === 'Editar' ? dataSelect.codigo_barras : '') || codigogenerado || '';
       const codigoInternoFinal = randomCodeinterno || (accion === 'Editar' ? dataSelect.codigo_interno : '') || codigogenerado || '';
 
-      // 👇 DEFINE baseProductoData AQUÍ (antes del if/else) 👇
-      const baseProductoData = {
+      const baseData = {
         _nombre: nombreEnMayusculas,
         _precio_venta: parseFloat(formData.precio_venta || 0),
         _precio_compra: parseFloat(formData.precio_compra || 0),
-        // Usa el ID de la categoría seleccionada, o la original si no se cambió en editar
-        _id_categoria: categoriaItemSelect?.id || dataSelect?.id_categoria,
+        _id_categoria: categoriaItemSelect.id,
         _codigo_barras: codigoBarrasFinal,
         _codigo_interno: codigoInternoFinal,
         _id_empresa: dataempresa.id,
-        _sevende_por: sevendepor,
-        _maneja_inventarios: true, // Siempre true
+        _sevende_por: sevendePorItemSelect.nombre,
+        _detalles: formData.detalles || '-',
       };
-      // 👆 FIN DE LA DEFINICIÓN 👆
-
-      let productoId = dataSelect?.id;
 
       if (accion === "Editar") {
-        const productoDataEditar = {
-          ...baseProductoData, // Usa la variable definida arriba
-          _id: dataSelect.id // Añade el ID para la función editar
+        // EDITAR: Llama a la función SQL actualizada que recibe _detalles
+        await editarProductos({ ...baseData, _id: dataSelect.id, _maneja_inventarios: true });
+      } else {
+        // NUEVO: Llama a crear_producto_con_stock que ahora recibe _detalles
+        const dataInsertar = {
+           ...baseData,
+           _id_almacen: localAlmacen.id,
+           _stock_inicial: parseFloat(formData.stock || 0)
         };
-        console.log("Editando producto con:", productoDataEditar); // Log para verificar
-        await editarProductos(productoDataEditar); // Llama a editar con los 10 argumentos correctos
-        const stockExistente = dataStockEspecifico;
-        if (!stockExistente && stateInventarios && almacenSelectItem?.id) {
-             const stockData = {
-                id_almacen: almacenSelectItem.id, id_producto: dataSelect.id,
-                stock: parseFloat(formData.stock || 0),
-                ubicacion: formData.detalles || '-',
-            };
-            await insertarStock(stockData);
-        } else if (stockExistente){
-             console.log("Stock ya existe (Editar). Actualizando detalles...");
-            if (actualizarDetallesStock) {
-                try {
-                    await actualizarDetallesStock({
-                        id: stockExistente.id, // ID del registro en la tabla 'stock'
-                        ubicacion: formData.detalles || '-', // Solo el detalle, stock_minimo no cambia
-                    });
-                    console.log("Detalles actualizados en stock ID:", stockExistente.id);
-                } catch (error) {
-                    console.error("Error al llamar a actualizarDetallesStock:", error);
-                    // Importante: re-lanzar el error para que onError de useMutation lo capture
-                    throw error; 
-                }
-            } else {
-                console.error("Función actualizarDetallesStock no encontrada en useStockStore.");
-                throw new Error("No se pudo actualizar la ubicación del stock (función no encontrada).");
-            }
-        }
-      } else { // NUEVO
-        // Objeto para insertar (CON _maneja_multiprecios)
-        const productoDataInsertar = {
-           ...baseProductoData, // Usa la variable definida arriba
-           _maneja_multiprecios: false
-        };
-         // 👆 FIN OBJETO INSERTAR 👆
-
-        console.log("Insertando producto con:", productoDataInsertar); // Log para verificar
-        productoId = await insertarProductos(productoDataInsertar); // Llama a insertar
-
-        if (productoId && stateInventarios && almacenSelectItem?.id) {
-          const stockData = {
-            id_almacen: almacenSelectItem.id, id_producto: productoId,
-            stock: parseFloat(formData.stock || 0),
-            stock_minimo: parseFloat(formData.stock_minimo || 0),
-            ubicacion: formData.detalles || '-',
-          };
-          await insertarStock(stockData);
-        }
+        await insertarProductos(dataInsertar);
       }
-      return productoId;
     },
-    onSuccess: (/* ... */) => { /* ... tu onSuccess ... */
+    onSuccess: () => {
         toast.success("Producto guardado correctamente");
       setIsExploding(true);
-      queryClient.invalidateQueries({ queryKey: ['mostrarproductos', dataempresa?.id] });
-      cerrarFormulario();
+      queryClient.invalidateQueries({ 
+        queryKey: [
+          'mostrarproductos',       // 1. El nombre base
+          dataempresa?.id,          // 2. El ID de la empresa
+          sucursalesItemSelect?.id_sucursal // 3. El ID de la sucursal que se está viendo
+        ] 
+      });
+      onClose();
     },
-    onError: (error) => { /* ... tu onError ... */
-       toast.error(`Error al guardar: ${error.message}`);
-      console.error(error);
+    onError: (error) => {
+       toast.error(`Error: ${error.message}`);
     },
   });
-
-  // 👇 El handleSubmit de RHF llama a esta función 👇
-  const handleGuardarSubmit = (data) => {
-     guardarProducto(data); // Llama a la mutación con los datos validados por RHF
-  };
-
 
   return (
     <Container $state={state}>
       <div className="sub-contenedor">
         <div className="headers">
-        <section>
-          <h1>
-            {accion === "Editar" ? "EDITAR PRODUCTO" : "REGISTRAR NUEVO PRODUCTO"}
-          </h1>
-        </section>
-        <section>
-          <BtnClose funcion={cerrarFormulario} /> {/* <-- Asegúrate de que esté aquí */}
-        </section>
-      </div>
+          <section>
+            <h1>{accion === "Editar" ? "EDITAR PRODUCTO" : "REGISTRAR NUEVO PRODUCTO"}</h1>
+          </section>
+          <section>
+            <BtnClose funcion={onClose} />
+          </section>
+        </div>
 
-        <Form className="formulario" onSubmit={handleSubmit(handleGuardarSubmit)}>
+        <Form className="formulario" onSubmit={handleSubmit(guardarProducto)}>
+          
           {/* --- COLUMNA IZQUIERDA --- */}
           <section className="seccion1">
-            <article> {/* Nombre */}
+            <article> 
                <InputText icono={<v.icononombre />}>
-                <input
-                  className="form__field" type="text" placeholder="Nombre del producto" autoComplete="off"
-                  {...register("nombre", { required: "El nombre es obligatorio" })}
-                />
+                <input className="form__field" type="text" placeholder="Nombre" {...register("nombre", { required: "Obligatorio" })} />
                 <label className="form__label">Nombre</label>
               </InputText>
               {errors.nombre && <p className="error-message">{errors.nombre.message}</p>}
             </article>
 
-             {/* Fila para Precios */}
-            <div className="row-inputs">
-              <article> {/* Precio Venta */}
+             <div className="row-inputs">
+              <article> 
                  <InputText icono={<v.iconoprecioventa />}>
-                   <input
-                     className="form__field" type="number" step="0.01" placeholder=" "
-                     {...register("precio_venta", { valueAsNumber: true, min: { value: 0, message: "Precio >= 0"} })}
-                   />
+                   <input className="form__field" type="number" step="0.01" placeholder=" " {...register("precio_venta")} />
                    <label className="form__label">Precio Venta</label>
                  </InputText>
-                  {errors.precio_venta && <p className="error-message">{errors.precio_venta.message}</p>}
               </article>
-              <article> {/* Precio Compra */}
+              <article> 
                  <InputText icono={<v.iconopreciocompra />}>
-                   <input
-                     className="form__field" type="number" step="0.01" placeholder=" "
-                     {...register("precio_compra", { valueAsNumber: true, min: { value: 0, message: "Costo >= 0"} })}
-                   />
-                   <label className="form__label">Costo Unit. (C/U)</label>
+                   <input className="form__field" type="number" step="0.01" placeholder=" " {...register("precio_compra")} />
+                   <label className="form__label">Costo (C/U)</label>
                  </InputText>
-                   {errors.precio_compra && <p className="error-message">{errors.precio_compra.message}</p>}
               </article>
             </div>
 
-            {/* 👇 MOVIDO AQUÍ: Stock Inicial 👇 */}
-            <article>
-                 <InputText icono={<v.iconostock />}>
-                   <input
-                     disabled={accion === 'Editar' && !!dataStockEspecifico} // Usa dataStockEspecifico
-                     className="form__field" type="number" step="0.01" placeholder=" "
-                     {...register("stock", { valueAsNumber: true, min: 0 })}
-                   />
-                   <label className="form__label">Stock Inicial</label>
-                 </InputText>
-                  {errors.stock && <p className="error-message">{errors.stock.message}</p>}
-            </article>
-            {/* 👆 FIN Stock Inicial */}
+            {/* Stock Inicial: SOLO VISIBLE SI ES NUEVO */}
+            {accion === "Nuevo" && (
+              <>
+                <article>
+                     <InputText icono={<v.iconostock />}>
+                       <input className="form__field" type="number" step="0.01" placeholder=" " {...register("stock")} />
+                       <label className="form__label">Stock Inicial</label>
+                     </InputText>
+                </article>
+                <div className="mensaje-aviso">
+                  <small>📍 El stock inicial se asignará a la sucursal seleccionada.</small>
+                </div>
+              </>
+            )}
 
-            {/* 👇 MOVIDO AQUÍ: Detalles 👇 */}
+            {/* Detalles: SIEMPRE VISIBLE (Ahora guarda en productos) */}
             <article>
                  <InputText icono={v.iconodetalles ? <v.iconodetalles /> : null}>
-                   <input
-                     className="form__field" type="text" placeholder=" " autoComplete="off"
-                     {...register("detalles")}
-                   />
-                   <label className="form__label">Detalles</label>
+                   <input className="form__field" type="text" placeholder=" " autoComplete="off" {...register("detalles")} />
+                   <label className="form__label">Detalles del Producto</label>
                  </InputText>
             </article>
-            {/* 👆 FIN Detalles/Ubicación */}
 
           </section>
 
           {/* --- COLUMNA DERECHA --- */}
           <section className="seccion2">
-
-            {/* Wrapper para Tipo y Marca en fila */}
             <div className="row-inputs">
                 <ContainerSelector>
                   <label>Tipo:</label>
                   <Select
                     options={unidadesDeVenta}
                     value={sevendePorItemSelect}
-                    onChange={handleSeVendePorSelect} // La función de manejo ya está preparada
-                    getOptionLabel={(option) => option.nombre}
-                    getOptionValue={(option) => option.id}
-                    placeholder="Buscar..."
-                    isSearchable
-                    // Opcional: añade estilos para que coincida con el resto de tu UI
-                    // styles={customSelectStyles}
+                    onChange={setSevendePorItemSelect}
+                    getOptionLabel={(opt) => opt.nombre}
+                    getOptionValue={(opt) => opt.id}
+                    placeholder="Tipo..."
                   />
                 </ContainerSelector>
 
-                <ContainerSelector> {/* Marca */}
+                <ContainerSelector> 
                   <label>Marca:</label>
                   <CreatableSelect
                     options={datacategorias || []} 
                     value={categoriaItemSelect}
-                    onChange={selectCategoria} // Se usa al seleccionar uno existente
-                    onCreateOption={handleCreateMarca} // Se usa al crear uno nuevo
-                    getOptionLabel={(option) => option.nombre}
-                    getOptionValue={(option) => option.id}
+                    onChange={selectCategoria}
+                    onCreateOption={handleCreateMarca}
+                    getOptionLabel={(opt) => opt.nombre}
+                    getOptionValue={(opt) => opt.id}
                     placeholder="Marca..."
-                    isSearchable
-                    isDisabled={isPending || isCreatingMarca} // Deshabilita si está guardando
-                    isLoading={isCreatingMarca} // Muestra spinner si está creando marca
+                    isDisabled={isCreatingMarca}
+                    isLoading={isCreatingMarca}
                   />
                 </ContainerSelector>
             </div>
 
-            {/* 👇 MOVIDO AQUÍ: Sucursal 👇 */}
-            <ContainerSelector>
-                 <label>Sucursal:</label>
-                 <SelectList
-                   data={dataSucursales} itemSelect={sucursalesItemSelect}
-                   onSelect={selectSucursal} displayField="nombre"
-                   placeholder="Seleccione sucursal..."
-                 />
-            </ContainerSelector>
-            {/* 👆 FIN Sucursal */}
+            {/* Sucursal/Almacén: SOLO SI ES NUEVO */}
+            {/* Al editar, ya no necesitamos esto porque los detalles están en el producto */}
+            {accion === "Nuevo" && (
+            <div className="row-inputs">
+              <ContainerSelector>
+                  <label>Sucursal:</label>
+                  <SelectList 
+                    data={dataSucursales} 
+                    itemSelect={localSucursal} // 👈 USA ESTADO LOCAL
+                    onSelect={handleSucursalLocalChange} // 👈 USA HANDLER LOCAL
+                    displayField="nombre" 
+                    placeholder="Seleccione..." 
+                  />
+              </ContainerSelector>
+              <ContainerSelector>
+                  <label>Almacén:</label>
+                  <SelectList 
+                    data={dataAlmacenes || []} // 👈 USA DATA DEL QUERY
+                    itemSelect={localAlmacen} // 👈 USA ESTADO LOCAL
+                    onSelect={setLocalAlmacen} // 👈 USA ESTADO LOCAL
+                    displayField="nombre" 
+                    placeholder={isLoadingAlmacenes ? "Cargando..." : "Seleccione..."}
+                    disabled={isLoadingAlmacenes || !localSucursal} 
+                  />
+              </ContainerSelector>
+            </div>
+            )}
 
-            {/* 👇 MOVIDO AQUÍ: Almacén 👇 */}
-            <ContainerSelector>
-                 <label>Almacén:</label>
-                 <SelectList
-                   data={dataAlmacenes} itemSelect={almacenSelectItem}
-                   onSelect={setAlmacenSelectItem} displayField="nombre"
-                   placeholder="Seleccione almacén..."
-                   disabled={isLoadingAlmacenes || !sucursalesItemSelect}
-                 />
-            </ContainerSelector>
-            {/* 👆 FIN Almacén */}
-
-             {/* Código de Barras */}
+             {/* Códigos */}
              <article className="contentPadregenerar">
                  <InputText icono={<v.iconocodigobarras />}>
-                <input
-                  className="form__field" value={randomCodebarras} onChange={handleChangebarras}
-                  type="text" placeholder="Código de Barras" autoComplete="off"
-                />
+                <input className="form__field" value={randomCodebarras} onChange={(e) => setRandomCodebarras(e.target.value)} type="text" placeholder="Código de Barras" />
                 <label className="form__label">Código de Barras</label>
               </InputText>
               <ContainerBtngenerar>
@@ -487,13 +357,9 @@ export function RegistrarProductos({
               </ContainerBtngenerar>
             </article>
 
-            {/* Código Interno */}
             <article className="contentPadregenerar">
                 <InputText icono={<v.iconocodigointerno />}>
-                <input
-                  className="form__field" value={randomCodeinterno} onChange={handleChangeinterno}
-                  type="text" placeholder="Código Interno" autoComplete="off"
-                />
+                <input className="form__field" value={randomCodeinterno} onChange={(e) => setRandomCodeinterno(e.target.value)} type="text" placeholder="Código Interno" />
                 <label className="form__label">Código Interno</label>
               </InputText>
               <ContainerBtngenerar>
@@ -501,25 +367,11 @@ export function RegistrarProductos({
               </ContainerBtngenerar>
             </article>
 
-             {/* Mensaje de advertencia para editar stock (opcional, si aún lo necesitas) */}
-             {accion === 'Editar' && dataStockEspecifico && (
-               <ContainerMensajeStock>
-                 <span> ❗ Use Inventario para ajustar el stock.</span>
-               </ContainerMensajeStock>
-             )}
-
           </section>
 
-           {/* Botón Guardar al final */}
+           {/* Botón Guardar */}
           <div className="footer-buttons">
-            <Btn1
-              type="submit"
-              icono={<v.iconoguardar />} // El icono ya lo pasas
-              titulo="Guardar"
-              bgcolor="#1d8850" // <-- Cambia el color aquí
-              disabled={isPending}
-              color={"white"}
-            />
+            <Btn1 type="submit" icono={<v.iconoguardar />} titulo="Guardar" bgcolor="#1d8850" disabled={isPending} color={"white"} />
           </div>
         </Form>
       </div>

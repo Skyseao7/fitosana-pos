@@ -10,19 +10,18 @@ import {
   useAuthStore,
   UserAuth,
 } from "../index";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Device } from "../styles/breakpoints";
 import { useQuery } from "@tanstack/react-query";
 import { useAsignacionCajaSucursalStore } from "../store/AsignacionCajaSucursalStore";
-import { usePermisosStore } from "../store/PermisosStore";
 import { useMostrarSucursalAsignadasQuery } from "../tanstack/AsignacionesSucursalStack";
 export function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stateMenu, setStateMenu] = useState(false);
-
+  const { selectSucursal } = useSucursalesStore();
   const { mostrarusuarios } = useUsuariosStore();
   const { mostrarempresa } = useEmpresaStore();
-    const { user } = UserAuth(); // Accedemos al contexto
+  const { user } = UserAuth(); // Accedemos al contexto
   const id_auth = user?.id; // Obtenemos el id_auth del usuario autenticado
   const { mostrarSucursalCajaAsignada } = useAsignacionCajaSucursalStore();
 
@@ -56,6 +55,15 @@ export function Layout({ children }) {
     refetchOnWindowFocus: false,
   });
 
+  useEffect(() => {
+    // Si la carga de sucursales fue exitosa y trajo datos...
+    if (dataSucursales && dataSucursales.length > 0) {
+      // ...selecciona la PRIMERA sucursal de la lista ASIGNADA
+      // como el valor por defecto en el estado global.
+      selectSucursal(dataSucursales[0]);
+    }
+  }, [dataSucursales, selectSucursal]); // Se ejecuta cuando dataSucursales cambia
+
   // Consolidación de isLoading y error
   const isLoading =
     isLoadingUsuarios || isLoadingSucursales || isLoadingEmpresa;
@@ -74,9 +82,10 @@ export function Layout({ children }) {
     <Container className={sidebarOpen ? "active" : ""}>
       <section className="contentSidebar">
         <Sidebar
-          state={sidebarOpen}
-          setState={() => setSidebarOpen(!sidebarOpen)}
-        />
+          state={sidebarOpen}
+          setState={() => setSidebarOpen(!sidebarOpen)}
+            dataSucursalesAsignadas={dataSucursales} // 👈 Pasamos los datos de las sucursales
+        />
       </section>
       <section className="contentMenuhambur">
         <SwitchHamburguesa
