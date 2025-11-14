@@ -27,6 +27,7 @@ export function TablaInventarios({ data: dataProp, onRowClick }) {
   	  accessorKey: "nombre_producto", 
   	  header: "Nombre",
   	  cell: (info) => <span>{info.getValue()}</span>,
+      meta: { align: 'left' }
   	},
     { 
      accessorKey: "marca", 
@@ -34,6 +35,11 @@ export function TablaInventarios({ data: dataProp, onRowClick }) {
       cell: (info) => <span>{info.getValue() || 'Sin Marca'}</span>,
       enableColumnFilter: true,
     },
+    {
+      accessorKey: "tipo", // El alias de 'sevende_por' de tu función SQL
+      header: "Tipo",
+      cell: (info) => <span>{info.getValue()}</span>,
+    },
     {
   	  accessorKey: "stock_total",
   	  header: "Stock Total",

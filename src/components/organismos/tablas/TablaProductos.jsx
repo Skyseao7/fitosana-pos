@@ -7,7 +7,6 @@ import {
 } from "../../../index";
 import Swal from "sweetalert2";
 import { v } from "../../../styles/variables";
-// 👇 ASEGÚRATE DE IMPORTAR ESTOS 👇
 import { useState, useMemo, useCallback, useEffect } from "react"; 
 import {
   flexRender,
@@ -67,106 +66,113 @@ export function TablaProductos({
 
   // FIX: Columnas corregidas y envueltas en useMemo
   const columns = useMemo(
-    () => [
-      {
-        accessorKey: "nombre",
-        header: "Nombre",
-        cell: (info) => <span>{info.getValue()}</span>,
-        enableColumnFilter: true,
-      },
-       { // Columna Marca (antes categoría)
-        accessorKey: "marca", 
-        header: "Marca",
-        cell: (info) => <span>{info.getValue()}</span>,
-        enableColumnFilter: true,
-      },
-      {
-        accessorKey: "p_venta",
-        header: "Precio",
-        cell: (info) => <span>{info.getValue()}</span>,
-        enableColumnFilter: true,
-      },
-      {
-        accessorKey: "p_compra",
-        header: "C/U",
-        cell: (info) => <span>{info.getValue()}</span>,
-        enableColumnFilter: true,
-      },
-      {
-        accessorKey: "sevende_por",
-        header: "Tipo",
-        cell: (info) => <span>{info.getValue()}</span>,
-        enableColumnFilter: true,
-      },
-      { // Columna Stock
-        accessorKey: "total_stock", 
-        header: "Stk", 
-        cell: (info) => <span>{info.getValue()}</span>, 
-        enableColumnFilter: true, 
-      },
-       { // Columna Ubicación
-        accessorKey: "detalles", 
-        header: "Detalles", 
-        cell: (info) => {
-          const ubicacionValue = info.getValue(); 
-          return <span>{ubicacionValue ? ubicacionValue : '-'}</span>; 
-        },
-        enableColumnFilter: true, 
-      },
-      { // Columna Acciones
-        accessorKey: "acciones",
-        header: "", // Sin título 
-        enableSorting: false,
-        cell: (info) => ( 
-          <ContentAccionesTabla
-            funcionEditar={() => editar(info.row.original)}
-            funcionEliminar={() => eliminar(info.row.original)}
-          />
-        ),
-        enableColumnFilter: false, 
-      },
-    ],
-    [editar, eliminar] // Dependencias correctas
-  );
+    () => [
+      {
+        accessorKey: "nombre",
+        header: "Nombre",
+        cell: (info) => <span>{info.getValue()}</span>,
+        enableColumnFilter: true,
+        size: 440, // 👈 Petición 2: Columna "Nombre" más ancha
+      },
+       { 
+        accessorKey: "marca", 
+        header: "Marca",
+        cell: (info) => <span>{info.getValue()}</span>,
+        enableColumnFilter: true,
+      },
+
+      {
+        accessorKey: "sevende_por",
+        header: "Tipo",
+        cell: (info) => <span>{info.getValue()}</span>,
+        enableColumnFilter: true,
+        size: 120, // (Ajuste opcional)
+      },
+      {
+        accessorKey: "p_venta",
+        header: "Precio",
+        cell: (info) => <span>{info.getValue()}</span>,
+        enableColumnFilter: true,
+        size: 100, // (Ajuste opcional)
+      },
+      {
+        accessorKey: "p_compra",
+        header: "C/U",
+        cell: (info) => <span>{info.getValue()}</span>,
+        enableColumnFilter: true,
+        size: 100, // (Ajuste opcional)
+      },
+      { 
+        accessorKey: "total_stock", 
+        header: "Stk", 
+        cell: (info) => <strong>{info.getValue()}</strong>,
+        enableColumnFilter: true, 
+        size: 50, // (Ajuste opcional)
+      },
+       { 
+        accessorKey: "detalles", 
+        header: "Detalles", 
+        cell: (info) => {
+          const ubicacionValue = info.getValue(); 
+          return <span>{ubicacionValue ? ubicacionValue : '-'}</span>; 
+        },
+        enableColumnFilter: true, 
+        size: 200, // (Ajuste opcional)
+      },
+      { 
+        accessorKey: "acciones",
+        header: "", 
+        enableSorting: false,
+        cell: (info) => ( 
+          <ContentAccionesTabla
+            funcionEditar={() => editar(info.row.original)}
+            funcionEliminar={() => eliminar(info.row.original)}
+          />
+        ),
+        enableColumnFilter: false, 
+        size: 80, // 👈 Petición 3: Columna "Acciones" más angosta
+      },
+    ],
+    [editar, eliminar] 
+  );
 
   // FIX: Estado de paginación controlado por react-table
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 10, // Puedes ajustar esto
-  });
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10, // Puedes ajustar esto
+  });
 
-  const table = useReactTable({
-    data: tableData, // FIX: Usa tableData (maneja null)
-    columns,
-    state: {
-      columnFilters,
-      pagination, // Añade el estado de paginación
-    },
-    onPaginationChange: setPagination, // Permite que la tabla controle la paginación
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), 
-    getPaginationRowModel: getPaginationRowModel(), 
-    getSortedRowModel: getSortedRowModel(), 
-    columnResizeMode: "onChange", 
-    // FIX: 'meta' eliminado si no se usa
-  });
-  
-  // 👇 FIX: useEffect AÑADIDO para el bug de layout 👇
-  useEffect(() => {
-    // Cuando el componente monta o los datos cambian,
-    // espera un poco antes de marcar como listo para renderizar la tabla.
-    setIsReady(false); // Reinicia si los datos cambian
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 150); // Delay de 150ms (puedes ajustar si es necesario)
+  const table = useReactTable({
+    data: tableData, // FIX: Usa tableData (maneja null)
+    columns,
+    state: {
+      columnFilters,
+      pagination, // Añade el estado de paginación
+    },
+    onPaginationChange: setPagination, // Permite que la tabla controle la paginación
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), 
+    getPaginationRowModel: getPaginationRowModel(), 
+    getSortedRowModel: getSortedRowModel(), 
+    columnResizeMode: "onChange", 
+    // FIX: 'meta' eliminado si no se usa
+  });
+  
+  // 👇 FIX: useEffect AÑADIDO para el bug de layout 👇
+  useEffect(() => {
+    // Cuando el componente monta o los datos cambian,
+    // espera un poco antes de marcar como listo para renderizar la tabla.
+    setIsReady(false); // Reinicia si los datos cambian
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 150); // Delay de 150ms (puedes ajustar si es necesario)
 
-    return () => clearTimeout(timer); // Limpia el timer
-  }, [tableData]); // Depende de los datos de la tabla
+    return () => clearTimeout(timer); // Limpia el timer
+  }, [tableData]); // Depende de los datos de la tabla
 
-  if (!isReady || !tableData) {
-      return <div>Cargando tabla...</div>; // O un spinner
-  }
-
+  if (!isReady || !tableData) {
+      return <div>Cargando tabla...</div>; // O un spinner
+  }
 
   return (
     <>
@@ -237,7 +243,6 @@ export function TablaProductos({
   );
 }
 
-// 👇 TU COMPONENTE STYLED 'Container' (USA LA ÚLTIMA VERSIÓN QUE TE DI) 👇
 const Container = styled.div`
   position: relative;
   margin: 5% 3%;
@@ -251,16 +256,21 @@ const Container = styled.div`
     width: 100%;
     margin-bottom: 1.5em;
     border-spacing: 0;
-    border-collapse: collapse; 
+    border-collapse: collapse;
+
+    border-radius: ${v.borderRadius};
+    overflow: hidden;
+    border: 2px solid ${({ theme }) => theme.color2};
 
     @media (min-width: ${v.bpbart}) {
-      font-size: 0.9em;
+      font-size: 0.85em;
     }
     @media (min-width: ${v.bpmarge}) {
-      font-size: 1em;
+      font-size: 0.9em;
     }
 
     thead {
+      /* Estilos para ocultar el thead en móvil */
       position: absolute;
       width: 1px;
       height: 1px;
@@ -271,8 +281,9 @@ const Container = styled.div`
       white-space: nowrap;
       border-width: 0;
 
-      @media (min-width: ${v.bpbart}) { 
-        position: relative; 
+      @media (min-width: ${v.bpbart}) {
+        /* Estilos para mostrar el thead en escritorio */
+        position: relative;
         width: auto;
         height: auto;
         margin: 0;
@@ -282,140 +293,151 @@ const Container = styled.div`
       }
 
       th {
+        /* Estilos de las celdas de encabezado (th) en ESCRITORIO */
         border-bottom: 2px solid ${({ theme }) => theme.color2};
+        border-right: 1px solid ${({ theme }) => theme.color2}; /* Borde derecho */
         font-weight: 700;
         text-align: center;
         color: ${({ theme }) => theme.text};
-        position: relative; 
-        padding: 0.75em 0.5em; 
-        vertical-align: middle; 
+        position: relative;
+        padding: 10px 0.5em;
+        vertical-align: middle;
 
-         &:first-of-type {
-           text-align: left; 
-           padding-left: 0.75em; 
-         }
-         &:last-of-type {
-            padding-right: 0.75em; 
-         }
-         span{ 
-           font-size:0.8em;
-           margin-left: 4px;
-           vertical-align: middle; 
-         }
+        &:first-of-type {
+          text-align: left;
+          padding-left: 0.75em;
+        }
+        &:last-of-type {
+          padding-right: 0.75em;
+          border-right: none; /* Sin borde en la última */
+        }
+        span {
+          font-size: 0.8em;
+          margin-left: 4px;
+          vertical-align: middle;
+        }
       }
     }
 
-    tbody,
-    tr,
-    td { // Solo td debería ser block en móvil
-      display: block; 
-      padding: 0;
-      text-align: left;
-      white-space: normal;
-       @media (min-width: ${v.bpbart}) { // Comportamiento escritorio
-         display: table-cell; 
-         padding: 0.75em 0.5em; // Padding escritorio
-         vertical-align: middle;
-         text-align: center; // Centrado por defecto en escritorio
-         border-bottom: none; // Borde va en la fila (tr)
-          &:first-child{
-           text-align: left; // Primera columna a la izquierda
-           padding-left: 0.75em; // Padding izq
-         }
-          &:last-child{
-            padding-right: 0.75em; // Padding der
-          }
-       }
-    }
+    /* ⚠️ SE ELIMINÓ EL BLOQUE 'tbody, tr, td' CONFLICTIVO ⚠️ */
 
     tr {
-       display: block; 
-       margin-bottom: 1em; 
-       border: 1px solid ${({ theme }) => theme.color2}; 
-       border-radius: ${v.borderRadius}; 
-       overflow: hidden; 
-       background-color: ${({ theme }) => theme.bgcards}; 
+      /* Estilos de la FILA en MÓVIL (formato tarjeta) */
+      display: block;
+      margin-bottom: 1em;
+      border: 1px solid ${({ theme }) => theme.color2};
+      border-radius: ${v.borderRadius};
+      overflow: hidden;
+      background-color: ${({ theme }) => theme.bgcards};
 
-      @media (min-width: ${v.bpbart}) { 
-        display: table-row; 
-        margin-bottom: 0; 
-        border: none; 
-        border-radius: 0; 
-        background-color: transparent; 
-        border-bottom: 1px solid ${({ theme }) => theme.color2}; 
+      @media (min-width: ${v.bpbart}) {
+        /* Estilos de la FILA en ESCRITORIO */
+        display: table-row;
+        margin-bottom: 0;
+        border: none;
+        border-radius: 0;
+        background-color: transparent;
+        border-bottom: 1px solid ${({ theme }) => theme.color2};
 
-          &:nth-of-type(even) { 
-            background-color: ${({ theme }) => theme.bgAlpha}; 
-          }
-          &:last-of-type {
-            border-bottom: none; 
-          }
+        &:nth-of-type(even) {
+          background-color: ${({ theme }) => theme.bgAlpha};
+        }
+        &:last-of-type {
+          border-bottom: none; /* Última fila sin borde inferior */
+        }
       }
     }
 
-    td { 
-       padding: 0.75em; 
-       vertical-align: middle;
-       text-align: right; 
-       border-bottom: 1px solid ${({ theme }) => theme.color2}; 
+    td {
+      /* Estilos de la CELDA en MÓVIL */
+      display: block;
+      padding: 0.75em;
+      vertical-align: middle;
+      text-align: right; /* Alinea el valor a la derecha */
+      border-bottom: 1px solid ${({ theme }) => theme.color2};
 
-       &:last-child{
-         border-bottom: none; 
-       }
-       // Estilos escritorio ya están arriba en la regla general td
+      &:last-child {
+        border-bottom: none; /* Última celda móvil sin borde */
+      }
+
+      @media (min-width: ${v.bpbart}) {
+        /* Estilos de la CELDA en ESCRITORIO */
+        display: table-cell;
+        padding: 0.75em 0.5em;
+        vertical-align: middle;
+        text-align: center; /* Centrado en escritorio */
+        border-bottom: none; /* Borde inferior lo maneja la fila (tr) */
+        border-right: 1px solid ${({ theme }) => theme.color2}; /* Borde derecho */
+
+        &:first-child {
+          text-align: left; /* Primera celda a la izquierda */
+          padding-left: 0.75em;
+        }
+        &:last-child {
+          padding-right: 0.75em;
+          border-right: none; /* Última celda sin borde derecho */
+        }
+      }
     }
 
     tbody {
       @media (min-width: ${v.bpbart}) {
-        display: table-row-group; 
+        padding: 10px 0.5em;
+        display: table-row-group;
       }
 
-      .ContentCell { 
+      .ContentCell {
+        /* Contenedor del texto dentro de la celda en móvil */
         display: flex;
-        justify-content: space-between; 
+        justify-content: space-between;
         align-items: center;
-        height: auto; 
-        padding: 0; 
-        border-bottom: none; 
-
-        @media (min-width: ${v.bpbart}) { 
-          display: block; 
-          justify-content: center; 
-        }
-      }
-      
-      td[data-title]:before { 
-        content: attr(data-title);
-        display: inline-block; 
-        font-size: 0.85em; 
-        font-weight: 600; 
-        color: ${({ theme }) => theme.text}; 
-        opacity: 0.7; 
-        margin-right: 0.5em; 
+        height: auto;
+        padding: 0;
+        border-bottom: none;
 
         @media (min-width: ${v.bpbart}) {
-          content: none; 
+          /* Reseteo en escritorio */
+          display: block;
+          justify-content: center;
+        }
+      }
+
+      td[data-title]:before {
+        /* Título de la celda en móvil (ej: "Marca:", "Precio:") */
+        content: attr(data-title);
+        display: inline-block;
+        font-size: 0.8em;
+        font-weight: 600;
+        color: ${({ theme }) => theme.text};
+        opacity: 0.7;
+        margin-right: 0.5em;
+        text-align: left; /* Alinea el título a la izquierda */
+
+        @media (min-width: ${v.bpbart}) {
+          /* Ocultar en escritorio */
+          content: none;
           display: none;
           margin-right: 0;
         }
       }
     }
-     .resizer {
-       position: absolute;
-       right: 0;
-       top: 0;
-       height: 100%;
-       width: 5px;
-       background: rgba(0, 0, 0, 0.5);
-       cursor: col-resize;
-       user-select: none;
-       touch-action: none;
-       opacity: 0; 
-       z-index: 1; 
-       &:hover, &.isResizing{
-         opacity: 1; 
-         background: ${({ theme }) => v.colorPrincipal}; // Usa tu color principal
-       }
-     }
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 5px;
+      background: rgba(0, 0, 0, 0.5);
+      cursor: col-resize;
+      user-select: none;
+      touch-action: none;
+      opacity: 0;
+      z-index: 1;
+      &:hover,
+      &.isResizing {
+        opacity: 1;
+        background: ${({ theme }) => v.colorPrincipal}; // Usa tu color principal
+      }
+    }
   }
 `;
