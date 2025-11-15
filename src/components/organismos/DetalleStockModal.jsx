@@ -12,7 +12,12 @@ import {
 import { useMostrarStockDesglosadoQuery } from '../../tanstack/StockStack'; 
 import { useQueryClient } from '@tanstack/react-query';
 
-export function DetalleStockModal({ producto, onClose }) {
+// --- CAMBIO: Props 'onIngresoClick', etc. eliminadas 
+// ya que el componente maneja su propio estado ---
+export function DetalleStockModal({ 
+  producto, 
+  onClose
+}) {
   // Estado para los modales de ACCIÓN (Ingreso, Salida, Transfer)
   const [modalRegistroAbierto, setModalRegistroAbierto] = useState(false);
   const [tipoMovimiento, setTipoMovimiento] = useState('ingreso');
@@ -41,12 +46,10 @@ export function DetalleStockModal({ producto, onClose }) {
     refetchDesglose(); 
     
     // 3. Invalida la query del inventario total (de la página principal)
-    // Esto le dice a TanStack "los datos 'mostrar_inventario_total' están obsoletos, 
-    // vuelve a pedirlos."
-    // Asegúrate de que 'mostrar_inventario_total' es el queryKey
-    // que usas en 'useMostrarInventarioTotalQuery' en Inventario.jsx
     queryClient.invalidateQueries(['mostrar_inventario_total']); 
   };
+
+  // --- CAMBIO: 'handleIngresoClick' eliminado por redundancia ---
 
   return (
     <>
@@ -54,15 +57,18 @@ export function DetalleStockModal({ producto, onClose }) {
         <div className="sub-contenedor">
           <div className="headers">
             <section>
-              <h1>{producto.nombre_producto}</h1>
-              <p>Stock Total: {producto.stock_total}</p>
+              <h3>{producto.nombre_producto}</h3>
+              <p className="marca">
+                Marca: <strong>{producto.marca || 'Sin Marca'}</strong>
+              </p>
+              <p>Stock Total: <strong>{producto.stock_total}</strong></p>
             </section>
             <section>
               <BtnClose funcion={onClose} />
             </section>
           </div>
 
-          {/* 2. Botones de Acción */}
+          {/* 2. Botones de Acción (Tu lógica original está perfecta) */}
           <ContenedorBotones>
             <Btn1 
               titulo="Ingreso" 
@@ -87,24 +93,24 @@ export function DetalleStockModal({ producto, onClose }) {
             />
           </ContenedorBotones>
 
-          {/* 3. Tabla de Desglose */}
+          {/* 3. Tabla de Desglose (Con "Ubicación" eliminada) */}
           <TablaDesglose>
             <thead>
               <tr>
                 <th>Sucursal</th>
                 <th>Almacén</th>
                 <th>Stock</th>
-                <th>Ubicación</th>
               </tr>
             </thead>
             <tbody>
-              {isLoading && <tr><td colSpan="4">Cargando...</td></tr>}
+              {/* --- CAMBIO: colSpan actualizado a 3 --- */}
+              {isLoading && <tr><td colSpan="3">Cargando...</td></tr>}
+              
               {desgloseStock?.map((item) => (
                 <tr key={item.id_stock}>
                   <td>{item.nombre_sucursal}</td>
                   <td>{item.nombre_almacen}</td>
                   <td><strong>{item.stock_actual}</strong></td>
-                  <td>{item.ubicacion || "-"}</td>
                 </tr>
               ))}
             </tbody>
@@ -112,6 +118,7 @@ export function DetalleStockModal({ producto, onClose }) {
         </div>
       </Container>
 
+      {/* 4. Modales (Esta lógica ya estaba correcta) */}
       {modalRegistroAbierto && (
         <RegistrarInventario 
           tipo={tipoMovimiento} 
@@ -149,7 +156,7 @@ const Container = styled.div`
   backdrop-filter: blur(5px);
   .sub-contenedor {
     position: relative;
-    width: 700px; /* Más ancho para la tabla */
+    width: 600px; /* Más ancho para la tabla */
     max-width: 90%;
     border-radius: 20px;
     background: ${({ theme }) => theme.body};
