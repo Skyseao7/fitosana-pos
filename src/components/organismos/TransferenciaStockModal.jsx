@@ -1,206 +1,249 @@
+import React, { useState, useMemo } from 'react';
 import styled from "styled-components";
 import { v } from "../../styles/variables";
+import { Icon } from '@iconify/react'; 
 import {
-  InputText,
-  Btn1,
-  useSucursalesStore,
-  useProductosStore,
-  useAlmacenesStore,
+  InputText,
+  Btn1,
+  SelectList,
+  useStockStore,
+  useMovStockStore,
+  useUsuariosStore,
 } from "../../index";
 import { useForm } from "react-hook-form";
-import { BtnClose } from "../../components/ui/buttons/BtnClose";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BtnClose } from "../ui/buttons/BtnClose";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-// import { useStockStore } from "../../../store/StockStore"; // Ya no se usa
-import { useBuscarProductosQuery } from "../../tanstack/ProductosStack";
-import { 
-  useMostrarAlmacenesXSucursalQuery, // Hook parametrizado (lo crearemos)
-} from "../../tanstack/AlmacenesStack";
-// ¡Hook corregido!
-import { useMostrarStockXAlmacenYProductoQuery } from "../../tanstack/StockStack"; 
-import { BuscadorList } from "../../components/ui/lists/BuscadorList";
-import { SelectList } from "../../components/ui/lists/SelectList";
-import { useUsuariosStore } from "../../store/UsuariosStore";
-import { TransferirStock } from "../../supabase/crudStock"; 
-import { useState } from "react";
-import { useMostrarSucursalesQuery } from "../../tanstack/SucursalesStack"; // Importamos sucursales
+import { useFormattedDate } from "../../hooks/useFormattedDate";
+import { useMostrarTodosLosAlmacenesConSucursalQuery } from "../../tanstack/AlmacenesStack";
 
-export function TransferenciaStockModal({ onClose }) {
-  const { datausuarios } = useUsuariosStore();
-  const queryClient = useQueryClient();
-  const { setBuscador, productosItemSelect, dataProductos, resetProductosItemSelect } = useProductosStore();
-  const { data: dataSucursales } = useMostrarSucursalesQuery();
-  
-  // Origen
-  const [sucursalOrigen, setSucursalOrigen] = useState(null);
-  const [almacenOrigen, setAlmacenOrigen] = useState(null);
-  const { data: dataAlmacenesOrigen } = useMostrarAlmacenesXSucursalQuery(sucursalOrigen?.id);
+// --- PROPS ---
+// Recibimos las mismas props que RegistrarInventario
+export function TransferenciaStockModal({
+  onClose,
+  producto,
+  stockDesglosado,
+  onSuccess
+}) {
+  const fechaLocal = useFormattedDate();
+  const { datausuarios } = useUsuariosStore();
+  const { insertarStock, editarStock } = useStockStore();
+  const { insertarMovStock } = useMovStockStore();
+  const { register, handleSubmit, reset } = useForm();
 
-  // Destino
-  const [sucursalDestino, setSucursalDestino] = useState(null);
-  const [almacenDestino, setAlmacenDestino] = useState(null);
-  const { data: dataAlmacenesDestino } = useMostrarAlmacenesXSucursalQuery(sucursalDestino?.id);
+  // --- DOS ESTADOS DE SELECCIÓN ---
+  const [selectedStockOrigen, setSelectedStockOrigen] = useState(null);
+  const [selectedStockDestino, setSelectedStockDestino] = useState(null);
 
-  // Stock (ahora usa el hook parametrizado)
-  const { data: dataStockOrigen, isLoading: isLoadingStock } = useMostrarStockXAlmacenYProductoQuery(
-    almacenOrigen?.id, 
-    productosItemSelect?.id
-  );
+  // --- QUERY PARA EL DESTINO ---
+  const { data: todosLosAlmacenes, isLoading: isLoadingAlmacenes } =
+    useMostrarTodosLosAlmacenesConSucursalQuery();
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  // --- LISTA 1: OPCIONES DE ORIGEN (Solo donde hay stock) ---
+  const opcionesOrigen = useMemo(() => {
+    if (!stockDesglosado) return [];
+    // Filtramos para que solo salgan items con stock > 0
+    return stockDesglosado
+      .filter(item => item.stock_actual > 0)
+      .map(item => ({
+        ...item,
+        displayLabel: `${item.nombre_sucursal} / ${item.nombre_almacen} (Stock: ${item.stock_actual})`
+      }));
+  }, [stockDesglosado]);
 
+  // --- LISTA 2: OPCIONES DE DESTINO (Todos los almacenes) ---
+  const opcionesDestino = useMemo(() => {
+    if (!todosLosAlmacenes) return [];
+    // Lógica copiada de RegistrarInventario para fusionar listas
+    return todosLosAlmacenes.map(almacen => {
+      const stockExistente = stockDesglosado?.find(
+        stock => stock.id_almacen === almacen.id
+      );
+      if (stockExistente) {
+        return {
+          ...stockExistente,
+          displayLabel: `${stockExistente.nombre_sucursal} / ${stockExistente.nombre_almacen} (Stock: ${stockExistente.stock_actual})`,
+        };
+      } else {
+        return {
+          id_stock: null,
+          id_almacen: almacen.id,
+          id_sucursal: almacen.id_sucursal,
+          nombre_sucursal: almacen.sucursal_nombre,
+          nombre_almacen: almacen.nombre,
+          stock_actual: 0,
+          displayLabel: `${almacen.sucursal_nombre} / ${almacen.nombre} (Stock: 0)`
+        };
+      }
+    });
+  }, [todosLosAlmacenes, stockDesglosado]);
+
+
+  // --- MUTACIÓN DE TRANSFERENCIA ---
   const { mutate, isPending } = useMutation({
     mutationFn: async (data) => {
-      // ... (Toda la lógica de validación se queda igual)
-      if (!productosItemSelect?.id || !almacenOrigen?.id || !almacenDestino?.id) {
-        throw new Error("Debe seleccionar un producto, almacén de origen y almacén de destino.");
+      // 1. Validaciones
+      if (!selectedStockOrigen || !selectedStockDestino) {
+        throw new Error("Debe seleccionar un origen y un destino.");
       }
-      if (almacenOrigen.id === almacenDestino.id) {
-        throw new Error("El almacén de origen y destino no pueden ser el mismo.");
+      if (selectedStockOrigen.id_almacen === selectedStockDestino.id_almacen) {
+        throw new Error("El origen y el destino no pueden ser el mismo.");
       }
-      const cantidad = parseFloat(data.cantidad);
-      if (cantidad <= 0) {
+      const cantidadNum = parseFloat(data.cantidad);
+      if (cantidadNum <= 0) {
         throw new Error("La cantidad debe ser mayor a 0.");
       }
-      if (!dataStockOrigen || dataStockOrigen.stock < cantidad) {
-        throw new Error(`Stock insuficiente en origen. Solo hay ${dataStockOrigen?.stock || 0}.`);
+      if (selectedStockOrigen.stock_actual < cantidadNum) {
+        throw new Error(`Stock insuficiente en origen. Solo hay ${selectedStockOrigen.stock_actual}.`);
       }
 
-      const p = {
-        cantidad: cantidad,
-        id_producto: productosItemSelect.id,
-        id_almacen_origen: almacenOrigen.id,
-        id_almacen_destino: almacenDestino.id,
-        id_usuario: datausuarios.id
+      // --- 2. PREPARAR OPERACIONES ---
+
+      // A. Salida del Origen
+      const pStockSalida = {
+        _id: selectedStockOrigen.id_stock,
+        cantidad: cantidadNum,
       };
-      await TransferirStock(p);
+
+      // B. Ingreso al Destino (Insertar o Editar)
+      let pStockIngreso;
+      const tipoIngreso = selectedStockDestino.id_stock ? "editar" : "insertar";
+
+      if (tipoIngreso === "editar") {
+        pStockIngreso = {
+          _id: selectedStockDestino.id_stock,
+          cantidad: cantidadNum,
+        };
+      } else {
+        // (Copiado de RegistrarInventario, coincide con tu tabla 'stock')
+        pStockIngreso = {
+          id_almacen: selectedStockDestino.id_almacen,
+          id_producto: producto.id_producto,
+          stock: cantidadNum,
+          stock_minimo: 0,
+          ubicacion: ""
+        };
+      }
+
+      // C. Movimiento de Historial
+      const pMovimientoStock = {
+        id_almacen: selectedStockOrigen.id_almacen, // Origen
+        id_producto: producto.id_producto,
+        tipo_movimiento: "transferencia", // Tipo especial
+        cantidad: cantidadNum,
+        fecha: fechaLocal,
+        detalle: `Transferido a ${selectedStockDestino.nombre_sucursal} / ${selectedStockDestino.nombre_almacen}`,
+        origen: `Inventario (Usuario: ${datausuarios.nombres})`,
+        // (Opcional) Quizás quieras añadir un 'id_almacen_destino' aquí si tu tabla lo soporta
+      };
+
+      // --- 3. EJECUTAR TRANSACCIÓN ---
+      // (Idealmente esto sería una transacción de DB, pero lo hacemos secuencial)
+      
+      // Paso 1: Sacar de Origen
+      await editarStock(pStockSalida, "salida"); 
+      
+      // Paso 2: Meter en Destino
+      if (tipoIngreso === "editar") {
+        await editarStock(pStockIngreso, "ingreso");
+      } else {
+        await insertarStock(pStockIngreso);
+      }
+      
+      // Paso 3: Registrar historial
+      await insertarMovStock(pMovimientoStock);
     },
     onSuccess: () => {
       toast.success("Transferencia registrada con éxito.");
-      queryClient.invalidateQueries(["mostrar stock actual"]); 
-      queryClient.invalidateQueries(["mostrar stock xalmacenyproducto"]); // Invalida todos
-      resetProductosItemSelect();
-      onClose();
+      reset();
+      onSuccess(); // Llama a la función del padre para refrescar y cerrar
     },
     onError: (error) => {
       toast.error(error.message);
     }
   });
 
-  return (
-  	<Container>
-  	  {isPending ? (
-  		<span>guardando...🔼</span>
-  	  ) : (
-  		<div className="sub-contenedor">
-  		  <div className="headers">
-  			<section>
-  			  <h1>Transferir Stock</h1>
-  			</section>
-  			<section>
-  			  <BtnClose
-  				funcion={() => {
-  				  resetProductosItemSelect();
-  				  onClose();
-  				}}
-  			  />
-  			</section>
-  		  </div>
+  if (isLoadingAlmacenes) {
+    return (
+      <Container>
+        <div className="sub-contenedor"><span>Cargando almacenes...</span></div>
+      </Container>
+    );
+  }
 
-          {/* Buscador de Producto */}
-  		  <section className="containerListas">
-  			<BuscadorList
-  			  data={dataProductos}
-  			  onSelect={selectProductos}
-  			  setBuscador={setBuscador}
-  			/>
-  			<span>
-  			  Producto:{" "}
-  			  <strong>
-  				{productosItemSelect?.nombre ? productosItemSelect?.nombre : "-"}
-  			  </strong>
-  			</span>
-  		  </section>
-          
+  return (
+    <Container>
+      {isPending ? (
+        <span>guardando...🔼</span>
+      ) : (
+        <div className="sub-contenedor">
+          <div className="headers">
+            <section>
+              <h1>Transferir Stock</h1>
+            </section>
+            <section>
+              <BtnClose funcion={onClose} />
+            </section>
+          </div>
+
+          <section className="containerListas">
+            <span>Producto: <strong>{producto.nombre_producto}</strong></span>
+            
+            {/* --- SELECTOR DE ORIGEN --- */}
+            <ContainerSelector>
+              <label>Desde (Origen):</label>
+              <SelectList
+                data={opcionesOrigen} 
+                itemSelect={selectedStockOrigen}
+                onSelect={setSelectedStockOrigen}
+                displayField="displayLabel"
+                placeholder="Seleccione un origen..."
+              />
+            </ContainerSelector>
+
+            {/* --- SELECTOR DE DESTINO --- */}
+            <ContainerSelector>
+              <label>Hacia (Destino):</label>
+              <SelectList
+                data={opcionesDestino} 
+                itemSelect={selectedStockDestino}
+                onSelect={setSelectedStockDestino}
+                displayField="displayLabel"
+                placeholder="Seleccione un destino..."
+              />
+            </ContainerSelector>
+            
+          </section>
+            
           <form className="formulario" onSubmit={handleSubmit(mutate)}>
-            <Row>
-              {/* Columna Origen */}
-              <Col>
-                <h3>Origen</h3>
-                <ContainerSelector>
-  	  			  <label>Sucursal Origen:</label>
-  	  			  <SelectList
-  		  	  		data={dataSucursales}
-  	  	  	  		itemSelect={sucursalOrigen}
-  	  	  	  		onSelect={setSucursalOrigen}
-  	  	  	  		displayField="nombre"
-  	  	  	      />
-  	  		    </ContainerSelector>
-  	  		    <ContainerSelector>
-  	  			  <label>Almacen Origen:</label>
-  	  			  <SelectList
-  	  	  	  		data={dataAlmacenesOrigen}
-  	  	  	  		itemSelect={almacenOrigen}
-  	  	  	  		onSelect={setAlmacenOrigen}
-  	  	  	  		displayField="nombre"
-  	  	  	      />
-  	  		    </ContainerSelector>
-                <span>
-  	  			  Stock disponible:{" "}
-  	  			  <strong>{dataStockOrigen?.stock ? dataStockOrigen?.stock : "-"} </strong>
-  	  			</span>
-              </Col>
-              
-              {/* Columna Destino */}
-              <Col>
-                <h3>Destino</h3>
-                <ContainerSelector>
-  	  			  <label>Sucursal Destino:</label>
-  	  			  <SelectList
-  		  	  		data={dataSucursales}
-  	  	  	  		itemSelect={sucursalDestino}
-  	  	  	  		onSelect={setSucursalDestino}
-  	  	  	  		displayField="nombre"
-  	  	  	      />
-  	  		    </ContainerSelector>
-  	  		    <ContainerSelector>
-  	  			  <label>Almacen Destino:</label>
-  	  			  <SelectList
-  	  	  	  		data={dataAlmacenesDestino}
-  	  	  	  		itemSelect={almacenDestino}
-  	  	  	  		onSelect={setAlmacenDestino}
-  	  	  	  		displayField="nombre"
-  	  	  	      />
-  	  		    </ContainerSelector>
-              </Col>
-            </Row>
-
-  			  <section className="form-subcontainer">
-  				<article>
-  				  <InputText icono={<v.iconoflechaderecha />}>
-  					<input
-  					  className="form__field"
-  					  type="number"
-                      step="0.01"
-  					  {...register("cantidad", { required: true })}
-  					/>
-  					<label className="form__label">Cantidad a transferir</label>
-                    {errors.cantidad && <p>La cantidad es requerida.</p>}
-  				  </InputText>
-  				</article>
-  				<Btn1
-  				  disabled={!productosItemSelect?.nombre || !almacenOrigen || !almacenDestino}
-  				  icono={<v.iconoguardar />}
-  				  titulo="Transferir"
-  				  bgcolor="#0d6efd"
-  				/>
-  			  </section>
-  			</form>
-  		</div>
-  	  )}
-  	</Container>
-  );
+            <section className="form-subcontainer">
+              <article>
+                <InputText icono={<v.iconoflechaderecha />}>
+                  <input
+                    className="form__field"
+                    type="number"
+                    step="0.01" 
+                    {...register("cantidad", { required: true })}
+                    placeholder=" "
+                  />
+                  <label className="form__label">Cantidad a transferir</label>
+                </InputText>
+              </article>
+              <Btn1
+                disabled={!selectedStockOrigen || !selectedStockDestino} 
+                icono={<Icon icon="fa6-solid:right-left" />}
+                titulo="Confirmar Transferencia"
+                bgcolor="#0d6efd" // Azul
+              />
+            </section>
+          </form>
+        </div>
+      )}
+    </Container>
+  );
 }
+
+// --- (Estilos copiados de RegistrarInventario) ---
 const Container = styled.div`
   transition: 0.5s;
   top: 0;
@@ -232,72 +275,33 @@ const Container = styled.div`
       display: flex;
       flex-direction: column;
     }
-    .contentSucursal {
-      display: flex;
-      gap: 10px;
-    }
     .headers {
       display: flex;
       justify-content: space-between;
       align-items: center;
-
       h1 {
         font-size: 30px;
         font-weight: 700;
         text-transform: uppercase;
       }
-      span {
-        font-size: 20px;
-        cursor: pointer;
-      }
     }
     .formulario {
       .form-subcontainer {
-        gap: 20px;
+        gap: 40px;
         display: flex;
         flex-direction: column;
-        .colorContainer {
-          .colorPickerContent {
-            padding-top: 15px;
-            min-height: 50px;
-          }
-        }
       }
     }
   }
 `;
-
 const ContainerSelector = styled.div`
   display: flex;
-  gap: 10px;
-  align-items: center;
+  flex-direction: column; /* Para que el label esté arriba */
+  gap: 8px;
   position: relative;
-`;
-
-const Row = styled.div`
-  display: flex;
-  gap: 20px;
-  width: 100%;
-  flex-wrap: wrap; // Para pantallas pequeñas
-  & > div {
-    flex: 1;
-    min-width: 200px; // Evita que se encojan demasiado
-  }
-`;
-const Col = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  border: 1px solid ${({ theme }) => theme.bordercolorDash};
-  padding: 15px;
-  border-radius: 10px;
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0;
-  }
-  span {
-    font-size: 14px;
+  
+  label {
+    font-size: 0.9em;
+    opacity: 0.8;
   }
 `;
