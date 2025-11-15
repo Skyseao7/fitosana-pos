@@ -9,8 +9,8 @@ import {
   TransferenciaStockModal 
 } from "../../index"; // Importa los modales de acción
 
-// Asumo que creaste este hook para la función 'mostrar_stock_desglosado'
 import { useMostrarStockDesglosadoQuery } from '../../tanstack/StockStack'; 
+import { useQueryClient } from '@tanstack/react-query';
 
 export function DetalleStockModal({ producto, onClose }) {
   // Estado para los modales de ACCIÓN (Ingreso, Salida, Transfer)
@@ -18,13 +18,34 @@ export function DetalleStockModal({ producto, onClose }) {
   const [tipoMovimiento, setTipoMovimiento] = useState('ingreso');
   const [modalTransferAbierto, setModalTransferAbierto] = useState(false);
 
-  // 1. Query para el desglose de stock de ESTE producto
-  const { data: desgloseStock, isLoading } = useMostrarStockDesglosadoQuery(producto.id_producto);
+  // Inicializa el queryClient
+  const queryClient = useQueryClient();
 
-  // Funciones para abrir los modales de ACCIÓN
+  // 1. Query para el desglose (Añadimos 'refetch' para uso local)
+  const { data: desgloseStock, isLoading, refetch: refetchDesglose } = 
+    useMostrarStockDesglosadoQuery(producto.id_producto);
+
   const abrirModalRegistro = (tipo) => {
     setTipoMovimiento(tipo);
     setModalRegistroAbierto(true);
+  };
+
+  // Esta función se la pasaremos a los modales hijos.
+  // Se ejecutará cuando la mutación (ingreso/salida/transfer) sea exitosa.
+  const handleSuccess = () => {
+    // 1. Cierra los modales de acción
+    setModalRegistroAbierto(false);
+    setModalTransferAbierto(false);
+    
+    // 2. Refresca la query del desglose (de ESTE modal)
+    refetchDesglose(); 
+    
+    // 3. Invalida la query del inventario total (de la página principal)
+    // Esto le dice a TanStack "los datos 'mostrar_inventario_total' están obsoletos, 
+    // vuelve a pedirlos."
+    // Asegúrate de que 'mostrar_inventario_total' es el queryKey
+    // que usas en 'useMostrarInventarioTotalQuery' en Inventario.jsx
+    queryClient.invalidateQueries(['mostrar_inventario_total']); 
   };
 
   return (
@@ -91,16 +112,21 @@ export function DetalleStockModal({ producto, onClose }) {
         </div>
       </Container>
 
-      {/* 4. Renderiza los modales de acción SI se activan */}
       {modalRegistroAbierto && (
         <RegistrarInventario 
           tipo={tipoMovimiento} 
           onClose={() => setModalRegistroAbierto(false)} 
+          producto={producto} // Pasa la info del producto
+          stockDesglosado={desgloseStock} // Pasa el desglose (para los <select>)
+          onSuccess={handleSuccess} // Pasa la función de refresco
         />
       )}
       {modalTransferAbierto && (
         <TransferenciaStockModal 
           onClose={() => setModalTransferAbierto(false)} 
+          producto={producto} // Pasa la info del producto
+          stockDesglosado={desgloseStock} // Pasa el desglose (vital para transferir)
+          onSuccess={handleSuccess} // Pasa la función de refresco
         />
       )}
     </>

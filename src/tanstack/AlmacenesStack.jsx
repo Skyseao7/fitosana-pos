@@ -37,3 +37,17 @@ export const useMostrarAlmacenesXSucursalInventarioQuery = () => {
     enabled: !!sucursalesItemSelect,
   });
 };
+
+// Este hook trae TODOS los almacenes de TODAS las sucursales
+// y la información de su sucursal (un "join").
+export const useMostrarTodosLosAlmacenesConSucursalQuery = () => {
+  // Asumimos que esta función la crearás en tu store (ver siguiente paso)
+  const { mostrarTodosLosAlmacenesConSucursal } = useAlmacenesStore(); 
+
+  return useQuery({
+    // Un queryKey único para esta nueva data
+    queryKey: ["mostrar_todos_los_almacenes_con_sucursal"],
+    queryFn: () => mostrarTodosLosAlmacenesConSucursal(),
+    // No necesita 'enabled' si siempre debe cargarse
+  });
+};

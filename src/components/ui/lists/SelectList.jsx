@@ -3,37 +3,51 @@ import React, { useState } from "react";
 import styled from "styled-components";
 
 export const SelectList = ({
-  data, 
-  placeholder, 
-  onSelect, 
-  displayField = "nombre",itemSelect
+  data,
+  placeholder = "Selecciona una opción", // Añadimos un placeholder por defecto
+  onSelect,
+  displayField = "nombre",
+  itemSelect,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(itemSelect?.[displayField] || "Select an option");
+  // --- BUG CORREGIDO ---
+  // Se eliminó el estado interno 'selected'. El componente ahora es controlado
+  // por el padre a través de 'itemSelect'.
 
   const toggleDropdown = () => setIsOpen(!isOpen);
+
   const handleSelect = (item) => {
-     setSelected(item);
+    // Ya no seteamos un estado local
+    onSelect(item); // Solo informamos al padre
     setIsOpen(false);
-    onSelect(item);
   };
 
   return (
     <DropdownContainer>
       <DropdownHeader onClick={toggleDropdown}>
-        {itemSelect?.[displayField]}
-        <Arrow isOpen={isOpen}><Icon icon="iconamoon:arrow-up-2-bold" width="24" height="24" /></Arrow>
+        {/* Mostramos el valor del padre o el placeholder */}
+        {itemSelect?.[displayField] || placeholder}
+        
+        {/* FIX #1: Transient Prop $isOpen */}
+        <Arrow $isOpen={isOpen}>
+          <Icon icon="iconamoon:arrow-up-2-bold" width="24" height="24" />
+        </Arrow>
       </DropdownHeader>
+      
       {isOpen && (
         <DropdownList>
           {data?.map((item, index) => {
+            // Comparamos 'item' directamente con la prop 'itemSelect'
+            const isItemSelected = item === itemSelect; 
+            
             return (
               <DropdownItem
                 key={index}
                 onClick={() => handleSelect(item)}
-                isSelected={item === selected}
+                // FIX #1: Transient Prop $isSelected
+                $isSelected={isItemSelected} 
               >
-                {item === selected && <CheckMark>✔</CheckMark>}
+                {isItemSelected && <CheckMark>✔</CheckMark>}
                 {item?.[displayField]}
               </DropdownItem>
             );
@@ -48,7 +62,6 @@ export const SelectList = ({
 const DropdownContainer = styled.div`
   position: relative;
   width: ${(props) => props.width};
-
 `;
 
 const DropdownHeader = styled.div`
@@ -65,7 +78,7 @@ const DropdownHeader = styled.div`
 `;
 
 const Arrow = styled.span`
-  transform: ${({ isOpen }) => (isOpen ? "rotate(180deg)" : "rotate(0deg)")};
+  transform: ${({ $isOpen }) => ($isOpen ? "rotate(180deg)" : "rotate(0deg)")};
   transition: transform 0.3s ease;
 `;
 
@@ -94,8 +107,8 @@ const DropdownItem = styled.div`
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  background-color: ${({ isSelected }) =>
-    isSelected ? ( theme ) => theme.bg : "transparent"};
+  background-color: ${({ $isSelected, theme }) =>
+    $isSelected ? theme.bg : "transparent"};
   transition: background-color 0.2s ease;
 
   &:hover {

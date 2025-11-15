@@ -1,6 +1,6 @@
 import Swal from "sweetalert2";
 import { supabase } from "../index";
-const tabla = "almacen";
+const tabla = "almacen"; 
 
 
 export async function EditarAlmacen(p) {
@@ -27,7 +27,7 @@ export async function MostrarAlmacenXSucursal(p) {
 export async function MostrarAlmacenesXEmpresa(p) {
   const { data } = await supabase
     .from("sucursales")
-    .select(`*, almacen(*)`)
+    .select(`*, almacen(*)`) // Tu tabla se llama 'almacen'
     .eq("id_empresa", p.id_empresa);
   return data;
 }
@@ -43,4 +43,16 @@ export async function EliminarAlmacen(p) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+// --- ¡NUEVA FUNCIÓN AÑADIDA AL FINAL! ---
+export async function MostrarTodosLosAlmacenesConSucursal() {
+  // Llama a la función RPC que creaste en el SQL Editor
+  const { data, error } = await supabase.rpc('obtener_almacenes_con_sucursal');
+  
+  if (error) {
+    console.error("Error en MostrarTodosLosAlmacenesConSucursal:", error);
+    throw new Error(error.message);
+  }
+  return data;
 }

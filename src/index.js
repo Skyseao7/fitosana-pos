@@ -113,3 +113,6 @@ export * from './components/organismos/TransferenciaStockModal.jsx';
 export * from './tanstack/StockStack.jsx';
 export * from './components/organismos/DetalleStockModal.jsx';
 export * from './components/ui/lists/SelectList';
+export * from './store/MovStockStore';
+export * from "./store/StockStore";
+export * from "./store/CierreCajaStore";

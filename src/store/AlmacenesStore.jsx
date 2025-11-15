@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import {
   EliminarAlmacen,
-  
   MostrarAlmacenXSucursal,
   MostrarAlmacenesXEmpresa,
   InsertarAlmacen,
   EditarAlmacen,
   MostrarAlmacenesXSucursal,
+  MostrarTodosLosAlmacenesConSucursal, 
 } from "../index";
 
 export const useAlmacenesStore = create((set, get) => ({
@@ -31,7 +31,7 @@ export const useAlmacenesStore = create((set, get) => ({
   dataAlmacenesXempresa: null,
   mostrarAlmacenesXEmpresa: async (p) => {
     const response = await MostrarAlmacenesXEmpresa(p);
-    set({ dataAlmacenesXsucursal: response });
+    set({ dataAlmacenesXsucursal: response }); // ¿Quizás quisiste poner dataAlmacenesXempresa aquí?
     return response;
   },
   dataAlmacenesXsucursal: null,
@@ -50,5 +50,14 @@ export const useAlmacenesStore = create((set, get) => ({
   },
   editarAlmacen: async (p) => {
     await EditarAlmacen(p);
+  },
+
+  // --- ¡NUEVA FUNCIÓN AÑADIDA! ---
+  // Esta función es llamada por el hook de TanStack
+  mostrarTodosLosAlmacenesConSucursal: async () => {
+    // Llama a la nueva función de Supabase (que importamos)
+    const response = await MostrarTodosLosAlmacenesConSucursal();
+    // No necesitamos guardarla en el state, TanStack Query la manejará.
+    return response;
   },
 }));
