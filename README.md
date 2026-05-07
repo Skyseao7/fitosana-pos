@@ -160,15 +160,6 @@ Ejemplos de rutas:
 - `/configuracion/empresa`
 - `/configuracion/usuarios`
 
-## Requisitos previos
-
-Antes de levantar el proyecto, asegúrate de tener:
-
-- `Node.js` 18 o superior recomendado
-- `npm`
-- Un proyecto de `Supabase` con las tablas, vistas, funciones y políticas necesarias
-- Opcionalmente `Firebase CLI` si vas a desplegar
-
 ## Impresión y PDFs
 
 La utilidad `src/utils/CreatePdf.jsx` permite:
